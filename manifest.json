@@ -1,0 +1,18 @@
+{
+  "name": "Sprint Timer",
+  "short_name": "Sprint",
+  "description": "Mesure ton temps de sprint sur 10, 20, 30 yards avec la caméra",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#000000",
+  "background_color": "#000000",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
