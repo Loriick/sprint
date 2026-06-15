@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="theme-color" content="#000000">
+  <title>Sprint Timer</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ── HOME ── -->
+  <div id="screen-home" class="screen">
+    <h1 class="app-title">Sprint<span>⚡</span>Timer</h1>
+
+    <div>
+      <p style="font-size:0.8rem;color:var(--muted);text-align:center;margin-bottom:12px;">CHOISIR LA DISTANCE</p>
+      <div class="distance-picker">
+        <button class="dist-btn" data-dist="10">10<span class="unit">yards</span></button>
+        <button class="dist-btn" data-dist="20">20<span class="unit">yards</span></button>
+        <button class="dist-btn" data-dist="30">30<span class="unit">yards</span></button>
+      </div>
+    </div>
+
+    <button id="btn-start" class="btn-primary">▶ Démarrer</button>
+
+    <div class="history-section">
+      <h3>Derniers résultats</h3>
+      <div id="history-list" class="history-list"></div>
+    </div>
+
+    <button id="btn-settings" class="btn-secondary">⚙ Réglages</button>
+  </div>
+
+  <!-- ── CAMERA ── -->
+  <div id="screen-camera" class="screen hidden">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas-detect"></canvas>
+
+    <!-- Detection zone line -->
+    <div class="cam-overlay">
+      <div id="detection-zone" class="detection-zone">
+        <span id="zone-label" class="zone-label">LIGNE D'ARRIVÉE</span>
+      </div>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer-display">
+      <div id="timer-value" class="timer-value">0.00</div>
+    </div>
+
+    <!-- Countdown overlay -->
+    <div id="countdown-overlay" class="hidden">
+      <div id="countdown-number" class="countdown-number">5</div>
+      <div id="countdown-label" class="countdown-label">Préparez-vous</div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="cam-controls">
+      <div class="cam-info">
+        Placez la caméra <strong>face à la ligne d'arrivée</strong>.<br>
+        Distance : <span id="cam-distance-label">–</span>
+      </div>
+      <button id="btn-cancel" class="btn-cancel">✕ Annuler</button>
+    </div>
+
+    <!-- Camera error -->
+    <div id="camera-error" class="error-box hidden" style="position:absolute;bottom:100px;left:16px;right:16px;"></div>
+  </div>
+
+  <!-- ── RESULT ── -->
+  <div id="screen-result" class="screen hidden">
+    <p class="result-distance" id="result-distance">10 YARDS</p>
+    <div id="result-time" class="result-time">0.00<span class="result-unit">s</span></div>
+
+    <div class="result-actions">
+      <button id="btn-retry" class="btn-primary">↺ Relancer</button>
+      <button id="btn-home" class="btn-secondary">← Accueil</button>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS ── -->
+  <div id="screen-settings" class="screen hidden">
+    <h2>Réglages</h2>
+
+    <div class="setting-row">
+      <label>
+        Sensibilité de détection
+        <span id="sensitivity-val">30</span>
+      </label>
+      <input type="range" id="sensitivity-slider" min="10" max="80" step="1">
+      <p class="setting-desc">
+        <strong>Bas (10–25)</strong> → très réactif, risque de faux départ.<br>
+        <strong>Haut (40–80)</strong> → moins réactif, pour environnements avec beaucoup de mouvement.
+      </p>
+    </div>
+
+    <div id="sensitivity-preview">
+      <div class="motion-bar"><div class="motion-bar-fill" style="height:10%"></div></div>
+      <div class="motion-bar"><div class="motion-bar-fill" style="height:10%"></div></div>
+      <div class="motion-bar"><div class="motion-bar-fill" style="height:10%"></div></div>
+      <div class="motion-bar"><div class="motion-bar-fill" style="height:10%"></div></div>
+      <div class="motion-bar"><div class="motion-bar-fill" style="height:10%"></div></div>
+      <span class="threshold-line-label">Aperçu mouvement<br>en direct</span>
+    </div>
+
+    <button id="btn-settings-back" class="btn-primary" style="max-width:320px;width:100%;">← Retour</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
