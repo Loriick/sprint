@@ -1,0 +1,81 @@
+/* ── SETTINGS ── */
+#screen-settings {
+  gap: 24px;
+  background: var(--bg);
+  justify-content: flex-start;
+  padding-top: 60px;
+
+  h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    align-self: flex-start;
+  }
+}
+
+.setting-row {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+
+    span {
+      color: var(--text);
+      font-weight: 600;
+    }
+  }
+}
+
+input[type=range] {
+  width: 100%;
+  accent-color: var(--green);
+  height: 6px;
+}
+
+.setting-desc {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ── Sensitivity preview ── */
+#sensitivity-preview {
+  width: 100%;
+  max-width: 320px;
+  height: 80px;
+  border-radius: 10px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.motion-bar {
+  width: 12px;
+  height: 40px;
+  background: var(--surface2);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.motion-bar-fill {
+  width: 100%;
+  background: var(--green);
+  transition: height 0.05s;
+  border-radius: 4px;
+}
+
+.threshold-line-label {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-align: center;
+}

@@ -1,0 +1,123 @@
+/* ── HISTORY (home bottom) ── */
+.history-section {
+  width: 100%;
+  max-width: 320px;
+}
+
+.history-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.history-section h3 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 10px 14px;
+
+  .dist-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .time-val {
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .date-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+/* ── HISTORY (full page) ── */
+#screen-history {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding-top: 60px;
+  gap: 20px;
+  background: var(--bg);
+}
+
+.history-page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+  }
+}
+
+.history-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.tab-btn {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--surface2);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &.active {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(0,255,136,0.08);
+  }
+}
+
+.history-list-full {
+  max-height: none;
+  flex: 1;
+  overflow-y: auto;
+
+  .history-item {
+    gap: 10px;
+  }
+}
+
+.btn-delete {
+  background: none;
+  border: none;
+  color: var(--red);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+}
