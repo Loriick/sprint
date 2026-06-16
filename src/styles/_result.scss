@@ -96,3 +96,39 @@
   width: 100%;
   max-width: 320px;
 }
+
+.result-ghost-row {
+  display: flex;
+  gap: 8px;
+
+  .btn-secondary {
+    flex: 1;
+    background: var(--surface);
+    border-radius: 12px;
+  }
+}
+
+.share-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 999px;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+
+  &.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-8px);
+  }
+
+  &.hidden {
+    display: none;
+  }
+}

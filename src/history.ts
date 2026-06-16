@@ -1,3 +1,4 @@
+import { state } from './state';
 import type { HistoryEntry } from './types';
 
 export function getHistory(): HistoryEntry[] {
@@ -32,6 +33,14 @@ export function speedMph(dist: number, timeMs: number): number {
   const meters = dist * 0.9144;
   const mps = meters / (timeMs / 1000);
   return mps * 2.23694;
+}
+
+export function speedForUnits(dist: number, timeMs: number): number {
+  return state.units === 'imperial' ? speedMph(dist, timeMs) : speedKmh(dist, timeMs);
+}
+
+export function speedUnitLabel(): string {
+  return state.units === 'imperial' ? 'mph' : 'km/h';
 }
 
 export function getBest(dist: number): number | null {

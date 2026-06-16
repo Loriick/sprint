@@ -1,5 +1,5 @@
-import { beepGo, beepLow, beepStop } from './audio';
-import { getBest, saveResult, speedKmh, speedMph } from './history';
+import { beepGo, beepLow, beepStop, vibrate } from './audio';
+import { getBest, saveResult, speedForUnits, speedKmh, speedMph, speedUnitLabel } from './history';
 import { t } from './i18n';
 import { router } from './router';
 import { showScreen } from './screens';
@@ -60,7 +60,7 @@ function startCountdown(): void {
     { text: '3', action: beepLow },
     { text: '2', action: beepLow },
     { text: '1', action: beepLow },
-    { text: 'GO !', action: beepGo, isGo: true },
+    { text: 'GO !', action: () => { beepGo(); vibrate(80); }, isGo: true },
   ];
 
   let i = 0;
@@ -170,6 +170,7 @@ function triggerFinish(): void {
 
   detectionZone.classList.add('triggered');
   beepStop();
+  vibrate([60, 40, 60]);
 
   setTimeout(() => showResult(finalMs), 1200);
 }
@@ -183,8 +184,14 @@ function showResult(ms: number): void {
   resultDistance.textContent = state.distance + ' YARDS';
   resultTime.innerHTML = (ms / 1000).toFixed(2) + '<span class="result-unit">s</span>';
 
-  resultSpeedPrimary.textContent = speedKmh(state.distance, ms).toFixed(1);
-  resultSpeedSecondary.textContent = speedMph(state.distance, ms).toFixed(1) + ' mph';
+  const kmh = speedKmh(state.distance, ms);
+  const mph = speedMph(state.distance, ms);
+  const resultSpeedUnit = document.querySelector('#screen-result .result-stat-unit') as HTMLElement;
+  resultSpeedPrimary.textContent = speedForUnits(state.distance, ms).toFixed(1);
+  resultSpeedUnit.textContent = speedUnitLabel();
+  resultSpeedSecondary.textContent = state.units === 'imperial'
+    ? kmh.toFixed(1) + ' km/h'
+    : mph.toFixed(1) + ' mph';
 
   const isPB = prevBest == null || ms < prevBest;
   resultPbPill.classList.toggle('hidden', !isPB);

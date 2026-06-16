@@ -1,5 +1,6 @@
 export type Phase = 'idle' | 'countdown' | 'running' | 'done';
 export type Lang = 'fr' | 'en';
+export type Units = 'metric' | 'imperial';
 
 export interface AppState {
   distance: number;
@@ -11,6 +12,9 @@ export interface AppState {
   prevFrame: ImageData | null;
   stream: MediaStream | null;
   lang: Lang;
+  units: Units;
+  sound: boolean;
+  haptics: boolean;
 }
 
 export interface HistoryEntry {

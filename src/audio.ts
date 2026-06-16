@@ -1,3 +1,5 @@
+import { state } from './state';
+
 let audioCtx: AudioContext | null = null;
 
 export function getAudioCtx(): AudioContext {
@@ -6,6 +8,7 @@ export function getAudioCtx(): AudioContext {
 }
 
 function beep(freq: number, duration: number, type: OscillatorType = 'sine', vol = 0.4): void {
+  if (!state.sound) return;
   const ac = getAudioCtx();
   const osc = ac.createOscillator();
   const gain = ac.createGain();
@@ -22,3 +25,7 @@ function beep(freq: number, duration: number, type: OscillatorType = 'sine', vol
 export function beepLow(): void { beep(440, 0.15); }
 export function beepGo(): void { beep(880, 0.4, 'square', 0.5); }
 export function beepStop(): void { beep(1200, 0.6, 'square', 0.6); }
+
+export function vibrate(pattern: number | number[]): void {
+  if (state.haptics && navigator.vibrate) navigator.vibrate(pattern);
+}

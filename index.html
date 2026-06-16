@@ -106,8 +106,13 @@
 
     <div class="result-actions">
       <button id="btn-retry" class="btn-primary">↺ <span data-i18n="result_retry_label">Relancer</span></button>
-      <button id="btn-home" class="btn-secondary">← <span data-i18n="result_home_label">Accueil</span></button>
+      <div class="result-ghost-row">
+        <button id="btn-share" class="btn-secondary">↑ <span data-i18n="result_share_label">Partager</span></button>
+        <button id="btn-home" class="btn-secondary">← <span data-i18n="result_home_label">Accueil</span></button>
+      </div>
     </div>
+
+    <p id="share-toast" class="share-toast hidden" data-i18n="result_share_toast">Résultat copié !</p>
   </div>
 
   <!-- ── SETTINGS ── -->
@@ -133,6 +138,24 @@
       <div class="motion-bar"><div class="motion-bar-fill" style="height:10%"></div></div>
       <div class="motion-bar"><div class="motion-bar-fill" style="height:10%"></div></div>
       <span class="threshold-line-label"><span data-i18n="settings_preview_label">Aperçu mouvement</span><br><span data-i18n="settings_preview_label2">en direct</span></span>
+    </div>
+
+    <div class="setting-row">
+      <label><span data-i18n="settings_units">Unités</span></label>
+      <div id="units-toggle" class="units-toggle">
+        <button class="units-btn" data-units="metric">km/h</button>
+        <button class="units-btn" data-units="imperial">mph</button>
+      </div>
+    </div>
+
+    <div class="setting-row toggle-row">
+      <span data-i18n="settings_sound">Son</span>
+      <button id="toggle-sound" class="switch" role="switch"><span class="switch-knob"></span></button>
+    </div>
+
+    <div class="setting-row toggle-row">
+      <span data-i18n="settings_haptics">Vibrations</span>
+      <button id="toggle-haptics" class="switch" role="switch"><span class="switch-knob"></span></button>
     </div>
 
     <button id="btn-settings-back" class="btn-primary" style="max-width:320px;width:100%;" data-i18n="settings_back">← Retour</button>

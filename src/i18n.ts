@@ -25,6 +25,8 @@ const STR: Record<string, Record<Lang, string>> = {
   result_record: { fr: 'Record :', en: 'Best:' },
   result_retry_label: { fr: 'Relancer', en: 'Run again' },
   result_home_label: { fr: 'Accueil', en: 'Home' },
+  result_share_label: { fr: 'Partager', en: 'Share' },
+  result_share_toast: { fr: 'Résultat copié !', en: 'Result copied!' },
 
   settings_title: { fr: 'Réglages', en: 'Settings' },
   settings_sensitivity: { fr: 'Sensibilité de détection', en: 'Detection sensitivity' },
@@ -35,6 +37,9 @@ const STR: Record<string, Record<Lang, string>> = {
   settings_preview_label: { fr: 'Aperçu mouvement', en: 'Live motion' },
   settings_preview_label2: { fr: 'en direct', en: 'preview' },
   settings_back: { fr: '← Retour', en: '← Back' },
+  settings_units: { fr: 'Unités', en: 'Units' },
+  settings_sound: { fr: 'Son', en: 'Sound' },
+  settings_haptics: { fr: 'Vibrations', en: 'Haptics' },
 
   history_title: { fr: 'Historique', en: 'History' },
   history_back: { fr: '← Retour', en: '← Back' },
