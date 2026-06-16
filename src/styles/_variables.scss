@@ -1,10 +1,22 @@
 :root {
-  --green: #00ff88;
-  --yellow: #ffd600;
-  --red: #ff3b3b;
-  --bg: #000;
-  --surface: #111;
-  --surface2: #1c1c1c;
-  --text: #fff;
-  --muted: #888;
+  /* surfaces */
+  --bg: #0A0B0D;
+  --surface: #131619;
+  --surface-2: #15181B;
+
+  /* text */
+  --text: #F4F6F7;
+  --text-2: #C5CBD1;
+  --text-muted: #9AA0A6;
+  --text-dim: #5E646B;
+
+  /* accent */
+  --accent: #16E0CB;
+  --on-accent: #07090A;
+
+  /* status */
+  --warn: #FFC53D;
+  --danger: #FF4D3D;
+  --delta-slower: #FF7A5C;
+  --chart-bar-idle: #2C3137;
 }

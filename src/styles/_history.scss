@@ -15,7 +15,7 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .history-list {
@@ -36,18 +36,19 @@
 
   .dist-label {
     font-size: 0.8rem;
-    color: var(--muted);
+    color: var(--text-muted);
   }
 
   .time-val {
-    font-size: 1.1rem;
+    font-family: 'Saira Condensed', 'Archivo', sans-serif;
+    font-size: 1.2rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
 
   .date-label {
     font-size: 0.7rem;
-    color: var(--muted);
+    color: var(--text-muted);
     text-align: right;
   }
 
@@ -88,17 +89,17 @@
   flex: 0 0 auto;
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid var(--surface2);
+  border: 1px solid var(--surface-2);
   background: var(--surface);
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
 
   &.active {
-    border-color: var(--green);
-    color: var(--green);
-    background: rgba(0,255,136,0.08);
+    border-color: var(--accent);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
   }
 }
 
@@ -115,7 +116,7 @@
 .btn-delete {
   background: none;
   border: none;
-  color: var(--red);
+  color: var(--danger);
   font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
