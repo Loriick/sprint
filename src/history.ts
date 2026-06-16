@@ -21,3 +21,30 @@ export function deleteResult(id: string): void {
 export function formatTime(ms: number): string {
   return (ms / 1000).toFixed(2) + 's';
 }
+
+export function speedKmh(dist: number, timeMs: number): number {
+  const meters = dist * 0.9144;
+  const mps = meters / (timeMs / 1000);
+  return mps * 3.6;
+}
+
+export function speedMph(dist: number, timeMs: number): number {
+  const meters = dist * 0.9144;
+  const mps = meters / (timeMs / 1000);
+  return mps * 2.23694;
+}
+
+export function getBest(dist: number): number | null {
+  const times = getHistory().filter((h) => h.dist === dist).map((h) => h.timeMs);
+  return times.length ? Math.min(...times) : null;
+}
+
+export function getStatsForDistance(dist: number): { best: number | null; avg: number | null; count: number } {
+  const times = getHistory().filter((h) => h.dist === dist).map((h) => h.timeMs);
+  if (!times.length) return { best: null, avg: null, count: 0 };
+  return {
+    best: Math.min(...times),
+    avg: times.reduce((a, b) => a + b, 0) / times.length,
+    count: times.length,
+  };
+}

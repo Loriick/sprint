@@ -25,6 +25,7 @@
         <button class="dist-btn" data-dist="10">10<span class="unit">yards</span></button>
         <button class="dist-btn" data-dist="20">20<span class="unit">yards</span></button>
         <button class="dist-btn" data-dist="30">30<span class="unit">yards</span></button>
+        <button class="dist-btn" data-dist="40">40<span class="unit">yards</span></button>
       </div>
     </div>
 
@@ -80,7 +81,23 @@
   <!-- ── RESULT ── -->
   <div id="screen-result" class="screen hidden">
     <p class="result-distance" id="result-distance">10 YARDS</p>
+    <p id="result-pb-pill" class="result-pb-pill hidden">★ Nouveau record</p>
     <div id="result-time" class="result-time">0.00<span class="result-unit">s</span></div>
+
+    <div class="result-stats">
+      <div class="result-stat-card">
+        <span class="result-stat-label">Vitesse</span>
+        <div class="result-stat-value">
+          <span id="result-speed-primary">0.0</span><span class="result-stat-unit">km/h</span>
+        </div>
+        <span class="result-stat-secondary" id="result-speed-secondary">0.0 mph</span>
+      </div>
+      <div class="result-stat-card">
+        <span class="result-stat-label">vs record</span>
+        <div class="result-stat-value" id="result-vs-best">–</div>
+        <span class="result-stat-secondary" id="result-best-time"></span>
+      </div>
+    </div>
 
     <div class="result-actions">
       <button id="btn-retry" class="btn-primary">↺ Relancer</button>
@@ -128,6 +145,28 @@
       <button class="tab-btn" data-dist="10">10 yards</button>
       <button class="tab-btn" data-dist="20">20 yards</button>
       <button class="tab-btn" data-dist="30">30 yards</button>
+      <button class="tab-btn" data-dist="40">40 yards</button>
+    </div>
+
+    <div id="history-stats" class="history-stats">
+      <div class="history-stat">
+        <span class="history-stat-label">Record</span>
+        <span class="history-stat-value" id="history-stat-best">–</span>
+      </div>
+      <div class="history-stat">
+        <span class="history-stat-label">Moyenne</span>
+        <span class="history-stat-value" id="history-stat-avg">–</span>
+      </div>
+      <div class="history-stat">
+        <span class="history-stat-label">Sprints</span>
+        <span class="history-stat-value" id="history-stat-count">0</span>
+      </div>
+    </div>
+
+    <div class="history-chart-card">
+      <p class="history-chart-title">Progression</p>
+      <p class="history-chart-caption">plus rapide = plus haut</p>
+      <div id="history-chart" class="history-chart"></div>
     </div>
 
     <div id="history-page-list" class="history-list history-list-full"></div>
