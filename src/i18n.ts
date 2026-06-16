@@ -50,6 +50,11 @@ const STR: Record<string, Record<Lang, string>> = {
   history_chart_title: { fr: 'Progression', en: 'Progress' },
   history_chart_caption: { fr: 'plus rapide = plus haut', en: 'faster = taller' },
   history_empty: { fr: 'Aucun résultat', en: 'No runs' },
+
+  delete_title: { fr: 'Supprimer ce résultat ?', en: 'Delete this run?' },
+  delete_message: { fr: 'Cette action est irréversible.', en: 'This action cannot be undone.' },
+  delete_confirm: { fr: 'Supprimer', en: 'Delete' },
+  delete_cancel: { fr: 'Annuler', en: 'Cancel' },
 };
 
 export function t(key: string): string {
