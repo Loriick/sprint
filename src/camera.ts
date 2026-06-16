@@ -1,0 +1,198 @@
+import { beepGo, beepLow, beepStop } from './audio';
+import { saveResult } from './history';
+import { router } from './router';
+import { showScreen } from './screens';
+import { state } from './state';
+
+const video = document.getElementById('video') as HTMLVideoElement;
+const canvasDetect = document.getElementById('canvas-detect') as HTMLCanvasElement;
+const ctx = canvasDetect.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
+
+const timerValue = document.getElementById('timer-value') as HTMLElement;
+const countdownOverlay = document.getElementById('countdown-overlay') as HTMLElement;
+const countdownNumber = document.getElementById('countdown-number') as HTMLElement;
+const countdownLabel = document.getElementById('countdown-label') as HTMLElement;
+const detectionZone = document.getElementById('detection-zone') as HTMLElement;
+const zoneLabel = document.getElementById('zone-label') as HTMLElement;
+
+const resultDistance = document.getElementById('result-distance') as HTMLElement;
+const resultTime = document.getElementById('result-time') as HTMLElement;
+
+export async function startCamera(): Promise<void> {
+  try {
+    state.stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false,
+    });
+    video.srcObject = state.stream;
+    await video.play();
+    showScreen('camera');
+    (document.getElementById('cam-distance-label') as HTMLElement).textContent = state.distance + ' yards';
+    startCountdown();
+  } catch (err) {
+    showCameraError(err as Error);
+  }
+}
+
+function showCameraError(err: Error): void {
+  const box = document.getElementById('camera-error') as HTMLElement;
+  box.textContent = 'Impossible d\'accéder à la caméra. ' + (err.message || err);
+  box.classList.remove('hidden');
+}
+
+// ── Countdown ─────────────────────────────────────────
+function startCountdown(): void {
+  state.phase = 'countdown';
+  countdownOverlay.classList.remove('hidden');
+  timerValue.textContent = '0.00';
+  timerValue.classList.remove('running');
+  detectionZone.classList.remove('triggered');
+
+  const steps: { text: string; action: () => void; isGo?: boolean }[] = [
+    { text: '5', action: beepLow },
+    { text: '4', action: beepLow },
+    { text: '3', action: beepLow },
+    { text: '2', action: beepLow },
+    { text: '1', action: beepLow },
+    { text: 'GO !', action: beepGo, isGo: true },
+  ];
+
+  let i = 0;
+
+  function tick(): void {
+    if (i >= steps.length) {
+      countdownOverlay.classList.add('hidden');
+      startRun();
+      return;
+    }
+    const s = steps[i++];
+    countdownNumber.textContent = s.text;
+    countdownNumber.classList.toggle('go', !!s.isGo);
+    countdownLabel.textContent = s.isGo ? 'EN POSITION · PARTEZ !' : 'PRÉPAREZ-VOUS';
+    s.action();
+    setTimeout(tick, s.isGo ? 800 : 1000);
+  }
+
+  tick();
+}
+
+// ── Run & timer ────────────────────────────────────────
+function startRun(): void {
+  state.phase = 'running';
+  state.startTime = performance.now();
+  state.prevFrame = null;
+  timerValue.classList.add('running');
+  zoneLabel.textContent = 'LIGNE D\'ARRIVÉE';
+  detectionZone.classList.remove('triggered');
+
+  function tick(): void {
+    if (state.phase !== 'running') return;
+    state.elapsed = performance.now() - state.startTime;
+    timerValue.textContent = (state.elapsed / 1000).toFixed(2);
+    state.timerRaf = requestAnimationFrame(tick);
+  }
+  tick();
+
+  requestAnimationFrame(detectLoop);
+}
+
+// ── Motion detection ───────────────────────────────────
+function detectLoop(): void {
+  if (state.phase !== 'running') return;
+
+  if (video.readyState < 2) {
+    requestAnimationFrame(detectLoop);
+    return;
+  }
+
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  if (!vw || !vh) {
+    requestAnimationFrame(detectLoop);
+    return;
+  }
+
+  canvasDetect.width = vw;
+  canvasDetect.height = vh;
+
+  // Draw current frame
+  ctx.drawImage(video, 0, 0, vw, vh);
+
+  // Sample a vertical strip in the center (detection zone)
+  const zoneWidth = Math.floor(vw * 0.08); // 8% of width
+  const zoneX = Math.floor(vw / 2 - zoneWidth / 2);
+  const sampleStep = Math.max(1, Math.floor(vh / 40)); // ~40 sample rows
+
+  const current = ctx.getImageData(zoneX, 0, zoneWidth, vh);
+
+  if (state.prevFrame) {
+    let totalDiff = 0;
+    let samples = 0;
+
+    for (let y = 0; y < vh; y += sampleStep) {
+      for (let x = 0; x < zoneWidth; x += 2) {
+        const idx = (y * zoneWidth + x) * 4;
+        const dr = Math.abs(current.data[idx] - state.prevFrame.data[idx]);
+        const dg = Math.abs(current.data[idx + 1] - state.prevFrame.data[idx + 1]);
+        const db = Math.abs(current.data[idx + 2] - state.prevFrame.data[idx + 2]);
+        totalDiff += (dr + dg + db) / 3;
+        samples++;
+      }
+    }
+
+    const avgDiff = totalDiff / samples;
+
+    if (avgDiff > state.sensitivity) {
+      triggerFinish();
+      return;
+    }
+  }
+
+  state.prevFrame = current;
+  requestAnimationFrame(detectLoop);
+}
+
+function triggerFinish(): void {
+  if (state.phase !== 'running') return;
+  state.phase = 'done';
+  if (state.timerRaf !== null) cancelAnimationFrame(state.timerRaf);
+
+  const finalMs = performance.now() - state.startTime;
+  state.elapsed = finalMs;
+  timerValue.textContent = (finalMs / 1000).toFixed(2);
+  timerValue.classList.remove('running');
+
+  detectionZone.classList.add('triggered');
+  beepStop();
+
+  setTimeout(() => showResult(finalMs), 1200);
+}
+
+// ── Result screen ──────────────────────────────────────
+function showResult(ms: number): void {
+  stopCamera();
+  saveResult(state.distance, ms);
+  resultDistance.textContent = state.distance + ' YARDS';
+  resultTime.innerHTML = (ms / 1000).toFixed(2) + '<span class="result-unit">s</span>';
+  showScreen('result');
+}
+
+export function stopCamera(): void {
+  state.phase = 'idle';
+  if (state.timerRaf !== null) cancelAnimationFrame(state.timerRaf);
+  countdownOverlay.classList.add('hidden');
+  if (state.stream) {
+    state.stream.getTracks().forEach((t) => t.stop());
+    state.stream = null;
+  }
+  video.srcObject = null;
+  state.prevFrame = null;
+}
+
+export function init(): void {
+  document.getElementById('btn-cancel')!.addEventListener('click', () => {
+    stopCamera();
+    state.phase = 'idle';
+    router.navigate('/');
+  });
+}
