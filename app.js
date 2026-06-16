@@ -71,6 +71,53 @@ function showScreen(name) {
   });
 }
 
+// ── Router (hash-based, minimal) ───────────────────────
+// Drives bookmarkable/back-button-able pages (home, settings, history).
+// Camera/result stay outside the router: they're transient session states
+// driven by user actions, not destinations you'd navigate to directly.
+const router = (() => {
+  const routes = [];
+  let leaveCurrent = null;
+
+  function on(path, enter, leave) {
+    const paramNames = [];
+    const pattern = path.replace(/:[^/]+/g, (m) => {
+      paramNames.push(m.slice(1));
+      return '([^/]+)';
+    });
+    const regex = new RegExp(`^${pattern}$`);
+    routes.push({ regex, paramNames, enter, leave: leave || null });
+  }
+
+  function resolve() {
+    const path = location.hash.slice(1) || '/';
+    for (const r of routes) {
+      const match = path.match(r.regex);
+      if (match) {
+        if (leaveCurrent) leaveCurrent();
+        const params = {};
+        r.paramNames.forEach((name, i) => { params[name] = match[i + 1]; });
+        leaveCurrent = r.leave;
+        r.enter(params);
+        return;
+      }
+    }
+    navigate('/');
+  }
+
+  function navigate(path) {
+    if (location.hash.slice(1) === path) resolve();
+    else location.hash = path;
+  }
+
+  function start() {
+    window.addEventListener('hashchange', resolve);
+    resolve();
+  }
+
+  return { on, navigate, start };
+})();
+
 // ── History ────────────────────────────────────────────
 function getHistory() {
   try { return JSON.parse(localStorage.getItem('history') || '[]'); }
@@ -290,16 +337,14 @@ document.getElementById('btn-retry').addEventListener('click', async () => {
 
 document.getElementById('btn-home').addEventListener('click', () => {
   stopCamera();
-  renderHistory();
-  showScreen('home');
+  router.navigate('/');
 });
 
 // ── Cancel from camera ─────────────────────────────────
 document.getElementById('btn-cancel').addEventListener('click', () => {
   stopCamera();
   state.phase = 'idle';
-  renderHistory();
-  showScreen('home');
+  router.navigate('/');
 });
 
 function stopCamera() {
@@ -316,17 +361,11 @@ function stopCamera() {
 
 // ── Settings ───────────────────────────────────────────
 document.getElementById('btn-settings').addEventListener('click', () => {
-  sensitivitySlider.value = state.sensitivity;
-  sensitivityVal.textContent = state.sensitivity;
-  showScreen('settings');
-  startSensitivityPreview();
+  router.navigate('/settings');
 });
 
 document.getElementById('btn-settings-back').addEventListener('click', () => {
-  stopSensitivityPreview();
-  localStorage.setItem('sensitivity', state.sensitivity);
-  renderHistory();
-  showScreen('home');
+  router.navigate('/');
 });
 
 sensitivitySlider.addEventListener('input', () => {
@@ -407,14 +446,27 @@ function previewLoop() {
   previewRaf = requestAnimationFrame(previewLoop);
 }
 
+// ── Routes ──────────────────────────────────────────────
+router.on('/', () => {
+  renderHistory();
+  showScreen('home');
+});
+
+router.on('/settings', () => {
+  sensitivitySlider.value = state.sensitivity;
+  sensitivityVal.textContent = state.sensitivity;
+  showScreen('settings');
+  startSensitivityPreview();
+}, () => {
+  stopSensitivityPreview();
+  localStorage.setItem('sensitivity', state.sensitivity);
+});
+
 // ── Init ───────────────────────────────────────────────
 (function init() {
   // Set default active distance button
   document.querySelector(`.dist-btn[data-dist="${state.distance}"]`).classList.add('active');
-  sensitivitySlider.value = state.sensitivity;
-  sensitivityVal.textContent = state.sensitivity;
-  renderHistory();
-  showScreen('home');
+  router.start();
 
   // Register service worker
   if ('serviceWorker' in navigator) {
