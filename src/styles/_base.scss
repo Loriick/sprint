@@ -14,6 +14,16 @@ html, body {
   user-select: none;
 }
 
+/* Hide scrollbars on any scrollable element while keeping scroll usable */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 .tabular {
   font-family: 'Saira Condensed', 'Archivo', sans-serif;
   font-variant-numeric: tabular-nums;
