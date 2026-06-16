@@ -28,6 +28,67 @@
   font-weight: 400;
 }
 
+.result-pb-pill {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 6px 14px;
+
+  &.hidden {
+    display: none;
+  }
+}
+
+.result-stats {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.result-stat-card {
+  flex: 1;
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.result-stat-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.result-stat-value {
+  font-family: 'Saira Condensed', 'Archivo', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+
+  &.slower {
+    color: var(--delta-slower);
+  }
+}
+
+.result-stat-unit {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-left: 2px;
+}
+
+.result-stat-secondary {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
 .result-actions {
   display: flex;
   flex-direction: column;

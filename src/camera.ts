@@ -1,5 +1,5 @@
 import { beepGo, beepLow, beepStop } from './audio';
-import { saveResult } from './history';
+import { getBest, saveResult, speedKmh, speedMph } from './history';
 import { router } from './router';
 import { showScreen } from './screens';
 import { state } from './state';
@@ -17,6 +17,11 @@ const zoneLabel = document.getElementById('zone-label') as HTMLElement;
 
 const resultDistance = document.getElementById('result-distance') as HTMLElement;
 const resultTime = document.getElementById('result-time') as HTMLElement;
+const resultPbPill = document.getElementById('result-pb-pill') as HTMLElement;
+const resultSpeedPrimary = document.getElementById('result-speed-primary') as HTMLElement;
+const resultSpeedSecondary = document.getElementById('result-speed-secondary') as HTMLElement;
+const resultVsBest = document.getElementById('result-vs-best') as HTMLElement;
+const resultBestTime = document.getElementById('result-best-time') as HTMLElement;
 
 export async function startCamera(): Promise<void> {
   try {
@@ -171,9 +176,30 @@ function triggerFinish(): void {
 // ── Result screen ──────────────────────────────────────
 function showResult(ms: number): void {
   stopCamera();
+  const prevBest = getBest(state.distance);
   saveResult(state.distance, ms);
+
   resultDistance.textContent = state.distance + ' YARDS';
   resultTime.innerHTML = (ms / 1000).toFixed(2) + '<span class="result-unit">s</span>';
+
+  resultSpeedPrimary.textContent = speedKmh(state.distance, ms).toFixed(1);
+  resultSpeedSecondary.textContent = speedMph(state.distance, ms).toFixed(1) + ' mph';
+
+  const isPB = prevBest == null || ms < prevBest;
+  resultPbPill.classList.toggle('hidden', !isPB);
+
+  if (isPB) {
+    resultVsBest.textContent = '★ Record';
+    resultBestTime.textContent = prevBest == null ? '' : `Ancien : ${(prevBest / 1000).toFixed(2)}s`;
+    resultVsBest.classList.remove('slower');
+  } else {
+    const deltaS = Math.abs(ms - (prevBest as number)) / 1000;
+    const faster = ms < (prevBest as number);
+    resultVsBest.textContent = (faster ? '↓ ' : '↑ ') + deltaS.toFixed(2) + 's';
+    resultVsBest.classList.toggle('slower', !faster);
+    resultBestTime.textContent = `Record : ${((prevBest as number) / 1000).toFixed(2)}s`;
+  }
+
   showScreen('result');
 }
 
