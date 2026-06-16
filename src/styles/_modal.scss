@@ -1,0 +1,74 @@
+/* ── CONFIRM MODAL ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, black 60%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.15s;
+
+  &.visible {
+    opacity: 1;
+  }
+
+  &.hidden {
+    display: none;
+  }
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 320px;
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.modal-message {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+
+  .btn-secondary,
+  .btn-danger {
+    flex: 1;
+    border-radius: 12px;
+    padding: 12px;
+    font-weight: 700;
+  }
+
+  .btn-secondary {
+    background: var(--surface-2);
+  }
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: var(--on-accent);
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+
+  &:active {
+    opacity: 0.85;
+  }
+}

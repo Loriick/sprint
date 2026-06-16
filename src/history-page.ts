@@ -1,5 +1,6 @@
 import { deleteResult, formatTime, getHistory, speedForUnits, speedUnitLabel } from './history';
 import { getLang, t } from './i18n';
+import { confirmModal } from './modal';
 import { router } from './router';
 import { showScreen } from './screens';
 
@@ -66,10 +67,14 @@ function renderHistoryPage(distFilter: string): void {
 }
 
 export function init(): void {
-  historyPageList.addEventListener('click', (e) => {
+  historyPageList.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;
     const btn = target.closest<HTMLButtonElement>('.btn-delete');
     if (!btn || !btn.dataset.id) return;
+    const confirmed = await confirmModal(
+      t('delete_title'), t('delete_message'), t('delete_confirm'), t('delete_cancel'),
+    );
+    if (!confirmed) return;
     deleteResult(btn.dataset.id);
     const activeTab = document.querySelector<HTMLButtonElement>('.tab-btn.active');
     renderHistoryPage(activeTab ? activeTab.dataset.dist || 'all' : 'all');
