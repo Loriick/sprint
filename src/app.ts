@@ -1,10 +1,33 @@
-'use strict';
+// ── Types ──────────────────────────────────────────────
+type Phase = 'idle' | 'countdown' | 'running' | 'done';
+
+interface AppState {
+  distance: number;
+  sensitivity: number;
+  phase: Phase;
+  startTime: number;
+  elapsed: number;
+  timerRaf: number | null;
+  prevFrame: ImageData | null;
+  stream: MediaStream | null;
+}
+
+interface HistoryEntry {
+  id: string;
+  dist: number;
+  timeMs: number;
+  date: number;
+}
+
+type ScreenName = 'home' | 'camera' | 'result' | 'settings' | 'history';
+type RouteParams = Record<string, string>;
+type RouteHandler = (params: RouteParams) => void;
 
 // ── State ──────────────────────────────────────────────
-const state = {
+const state: AppState = {
   distance: 10,
   sensitivity: parseInt(localStorage.getItem('sensitivity') || '30'),
-  phase: 'idle', // idle | countdown | running | done
+  phase: 'idle',
   startTime: 0,
   elapsed: 0,
   timerRaf: null,
@@ -13,43 +36,43 @@ const state = {
 };
 
 // ── DOM refs ───────────────────────────────────────────
-const screens = {
-  home: document.getElementById('screen-home'),
-  camera: document.getElementById('screen-camera'),
-  result: document.getElementById('screen-result'),
-  settings: document.getElementById('screen-settings'),
-  history: document.getElementById('screen-history'),
+const screens: Record<ScreenName, HTMLElement> = {
+  home: document.getElementById('screen-home') as HTMLElement,
+  camera: document.getElementById('screen-camera') as HTMLElement,
+  result: document.getElementById('screen-result') as HTMLElement,
+  settings: document.getElementById('screen-settings') as HTMLElement,
+  history: document.getElementById('screen-history') as HTMLElement,
 };
 
-const video = document.getElementById('video');
-const canvasDetect = document.getElementById('canvas-detect');
-const ctx = canvasDetect.getContext('2d', { willReadFrequently: true });
+const video = document.getElementById('video') as HTMLVideoElement;
+const canvasDetect = document.getElementById('canvas-detect') as HTMLCanvasElement;
+const ctx = canvasDetect.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
 
-const timerValue = document.getElementById('timer-value');
-const countdownOverlay = document.getElementById('countdown-overlay');
-const countdownNumber = document.getElementById('countdown-number');
-const countdownLabel = document.getElementById('countdown-label');
-const detectionZone = document.getElementById('detection-zone');
-const zoneLabel = document.getElementById('zone-label');
+const timerValue = document.getElementById('timer-value') as HTMLElement;
+const countdownOverlay = document.getElementById('countdown-overlay') as HTMLElement;
+const countdownNumber = document.getElementById('countdown-number') as HTMLElement;
+const countdownLabel = document.getElementById('countdown-label') as HTMLElement;
+const detectionZone = document.getElementById('detection-zone') as HTMLElement;
+const zoneLabel = document.getElementById('zone-label') as HTMLElement;
 
-const resultDistance = document.getElementById('result-distance');
-const resultTime = document.getElementById('result-time');
-const historyList = document.getElementById('history-list');
-const historyPageList = document.getElementById('history-page-list');
-const historyTabs = document.querySelectorAll('.tab-btn');
+const resultDistance = document.getElementById('result-distance') as HTMLElement;
+const resultTime = document.getElementById('result-time') as HTMLElement;
+const historyList = document.getElementById('history-list') as HTMLElement;
+const historyPageList = document.getElementById('history-page-list') as HTMLElement;
+const historyTabs = document.querySelectorAll<HTMLButtonElement>('.tab-btn');
 
-const sensitivitySlider = document.getElementById('sensitivity-slider');
-const sensitivityVal = document.getElementById('sensitivity-val');
+const sensitivitySlider = document.getElementById('sensitivity-slider') as HTMLInputElement;
+const sensitivityVal = document.getElementById('sensitivity-val') as HTMLElement;
 
 // ── Audio (Web Audio API beeps) ────────────────────────
-let audioCtx = null;
+let audioCtx: AudioContext | null = null;
 
-function getAudioCtx() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function getAudioCtx(): AudioContext {
+  if (!audioCtx) audioCtx = new AudioContext();
   return audioCtx;
 }
 
-function beep(freq, duration, type = 'sine', vol = 0.4) {
+function beep(freq: number, duration: number, type: OscillatorType = 'sine', vol = 0.4): void {
   const ac = getAudioCtx();
   const osc = ac.createOscillator();
   const gain = ac.createGain();
@@ -63,13 +86,13 @@ function beep(freq, duration, type = 'sine', vol = 0.4) {
   osc.stop(ac.currentTime + duration);
 }
 
-function beepLow() { beep(440, 0.15); }
-function beepGo()  { beep(880, 0.4, 'square', 0.5); }
-function beepStop() { beep(1200, 0.6, 'square', 0.6); }
+function beepLow(): void { beep(440, 0.15); }
+function beepGo(): void { beep(880, 0.4, 'square', 0.5); }
+function beepStop(): void { beep(1200, 0.6, 'square', 0.6); }
 
 // ── Screen navigation ──────────────────────────────────
-function showScreen(name) {
-  Object.entries(screens).forEach(([k, el]) => {
+function showScreen(name: ScreenName): void {
+  (Object.entries(screens) as [ScreenName, HTMLElement][]).forEach(([k, el]) => {
     el.classList.toggle('hidden', k !== name);
   });
 }
@@ -79,11 +102,18 @@ function showScreen(name) {
 // Camera/result stay outside the router: they're transient session states
 // driven by user actions, not destinations you'd navigate to directly.
 const router = (() => {
-  const routes = [];
-  let leaveCurrent = null;
+  interface Route {
+    regex: RegExp;
+    paramNames: string[];
+    enter: RouteHandler;
+    leave: (() => void) | null;
+  }
 
-  function on(path, enter, leave) {
-    const paramNames = [];
+  const routes: Route[] = [];
+  let leaveCurrent: (() => void) | null = null;
+
+  function on(path: string, enter: RouteHandler, leave?: () => void): void {
+    const paramNames: string[] = [];
     const pattern = path.replace(/:[^/]+/g, (m) => {
       paramNames.push(m.slice(1));
       return '([^/]+)';
@@ -92,13 +122,13 @@ const router = (() => {
     routes.push({ regex, paramNames, enter, leave: leave || null });
   }
 
-  function resolve() {
+  function resolve(): void {
     const path = location.hash.slice(1) || '/';
     for (const r of routes) {
       const match = path.match(r.regex);
       if (match) {
         if (leaveCurrent) leaveCurrent();
-        const params = {};
+        const params: RouteParams = {};
         r.paramNames.forEach((name, i) => { params[name] = match[i + 1]; });
         leaveCurrent = r.leave;
         r.enter(params);
@@ -108,12 +138,12 @@ const router = (() => {
     navigate('/');
   }
 
-  function navigate(path) {
+  function navigate(path: string): void {
     if (location.hash.slice(1) === path) resolve();
     else location.hash = path;
   }
 
-  function start() {
+  function start(): void {
     window.addEventListener('hashchange', resolve);
     resolve();
   }
@@ -122,12 +152,12 @@ const router = (() => {
 })();
 
 // ── History ────────────────────────────────────────────
-function getHistory() {
+function getHistory(): HistoryEntry[] {
   try { return JSON.parse(localStorage.getItem('history') || '[]'); }
   catch { return []; }
 }
 
-function saveResult(dist, timeMs) {
+function saveResult(dist: number, timeMs: number): void {
   const history = getHistory();
   const id = (crypto.randomUUID && crypto.randomUUID()) || `${Date.now()}-${Math.random()}`;
   history.unshift({ id, dist, timeMs, date: Date.now() });
@@ -135,21 +165,21 @@ function saveResult(dist, timeMs) {
   localStorage.setItem('history', JSON.stringify(history));
 }
 
-function deleteResult(id) {
-  const history = getHistory().filter(h => h.id !== id);
+function deleteResult(id: string): void {
+  const history = getHistory().filter((h) => h.id !== id);
   localStorage.setItem('history', JSON.stringify(history));
 }
 
-function renderHistory() {
+function renderHistory(): void {
   const history = getHistory();
   if (!history.length) {
     historyList.innerHTML = '<p class="empty-history">Aucun résultat encore</p>';
     return;
   }
-  historyList.innerHTML = history.slice(0, 8).map(h => {
+  historyList.innerHTML = history.slice(0, 8).map((h) => {
     const d = new Date(h.date);
-    const dateStr = d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit' })
-      + ' ' + d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    const dateStr = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+      + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     return `
       <div class="history-item">
         <span class="dist-label">${h.dist} yards</span>
@@ -159,24 +189,24 @@ function renderHistory() {
   }).join('');
 }
 
-function formatTime(ms) {
+function formatTime(ms: number): string {
   return (ms / 1000).toFixed(2) + 's';
 }
 
 // ── History page (full, filterable by distance, deletable) ──
-function renderHistoryPage(distFilter) {
-  historyTabs.forEach(btn => {
+function renderHistoryPage(distFilter: string): void {
+  historyTabs.forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.dist === distFilter);
   });
 
-  const history = getHistory().filter(h => distFilter === 'all' || String(h.dist) === distFilter);
+  const history = getHistory().filter((h) => distFilter === 'all' || String(h.dist) === distFilter);
 
   if (!history.length) {
     historyPageList.innerHTML = '<p class="empty-history">Aucun résultat</p>';
     return;
   }
 
-  historyPageList.innerHTML = history.map(h => {
+  historyPageList.innerHTML = history.map((h) => {
     const d = new Date(h.date);
     const dateStr = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
       + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -193,45 +223,46 @@ function renderHistoryPage(distFilter) {
 }
 
 historyPageList.addEventListener('click', (e) => {
-  const btn = e.target.closest('.btn-delete');
-  if (!btn) return;
+  const target = e.target as HTMLElement;
+  const btn = target.closest<HTMLButtonElement>('.btn-delete');
+  if (!btn || !btn.dataset.id) return;
   deleteResult(btn.dataset.id);
-  const activeTab = document.querySelector('.tab-btn.active');
-  renderHistoryPage(activeTab ? activeTab.dataset.dist : 'all');
+  const activeTab = document.querySelector<HTMLButtonElement>('.tab-btn.active');
+  renderHistoryPage(activeTab ? activeTab.dataset.dist || 'all' : 'all');
 });
 
-historyTabs.forEach(btn => {
+historyTabs.forEach((btn) => {
   btn.addEventListener('click', () => {
-    const dist = btn.dataset.dist;
+    const dist = btn.dataset.dist as string;
     router.navigate(dist === 'all' ? '/history' : `/history/${dist}`);
   });
 });
 
-document.getElementById('btn-view-history').addEventListener('click', () => {
+document.getElementById('btn-view-history')!.addEventListener('click', () => {
   router.navigate('/history');
 });
 
-document.getElementById('btn-history-back').addEventListener('click', () => {
+document.getElementById('btn-history-back')!.addEventListener('click', () => {
   router.navigate('/');
 });
 
 // ── Distance selection ─────────────────────────────────
-document.querySelectorAll('.dist-btn').forEach(btn => {
+document.querySelectorAll<HTMLButtonElement>('.dist-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.dist-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.dist-btn').forEach((b) => b.classList.remove('active'));
     btn.classList.add('active');
-    state.distance = parseInt(btn.dataset.dist);
+    state.distance = parseInt(btn.dataset.dist as string);
   });
 });
 
 // ── Start flow ─────────────────────────────────────────
-document.getElementById('btn-start').addEventListener('click', async () => {
+document.getElementById('btn-start')!.addEventListener('click', async () => {
   // Unlock audio context on user gesture
   getAudioCtx();
   await startCamera();
 });
 
-async function startCamera() {
+async function startCamera(): Promise<void> {
   try {
     state.stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -240,28 +271,28 @@ async function startCamera() {
     video.srcObject = state.stream;
     await video.play();
     showScreen('camera');
-    document.getElementById('cam-distance-label').textContent = state.distance + ' yards';
+    (document.getElementById('cam-distance-label') as HTMLElement).textContent = state.distance + ' yards';
     startCountdown();
   } catch (err) {
-    showCameraError(err);
+    showCameraError(err as Error);
   }
 }
 
-function showCameraError(err) {
-  const box = document.getElementById('camera-error');
+function showCameraError(err: Error): void {
+  const box = document.getElementById('camera-error') as HTMLElement;
   box.textContent = 'Impossible d\'accéder à la caméra. ' + (err.message || err);
   box.classList.remove('hidden');
 }
 
 // ── Countdown ─────────────────────────────────────────
-function startCountdown() {
+function startCountdown(): void {
   state.phase = 'countdown';
   countdownOverlay.classList.remove('hidden');
   timerValue.textContent = '0.00';
   timerValue.classList.remove('running');
   detectionZone.classList.remove('triggered');
 
-  const steps = [
+  const steps: { text: string; action: () => void; isGo?: boolean }[] = [
     { text: '5', action: beepLow },
     { text: '4', action: beepLow },
     { text: '3', action: beepLow },
@@ -272,7 +303,7 @@ function startCountdown() {
 
   let i = 0;
 
-  function tick() {
+  function tick(): void {
     if (i >= steps.length) {
       countdownOverlay.classList.add('hidden');
       startRun();
@@ -290,7 +321,7 @@ function startCountdown() {
 }
 
 // ── Run & timer ────────────────────────────────────────
-function startRun() {
+function startRun(): void {
   state.phase = 'running';
   state.startTime = performance.now();
   state.prevFrame = null;
@@ -298,7 +329,7 @@ function startRun() {
   zoneLabel.textContent = 'LIGNE D\'ARRIVÉE';
   detectionZone.classList.remove('triggered');
 
-  function tick() {
+  function tick(): void {
     if (state.phase !== 'running') return;
     state.elapsed = performance.now() - state.startTime;
     timerValue.textContent = (state.elapsed / 1000).toFixed(2);
@@ -311,7 +342,7 @@ function startRun() {
 }
 
 // ── Motion detection ───────────────────────────────────
-function detectLoop() {
+function detectLoop(): void {
   if (state.phase !== 'running') return;
 
   if (video.readyState < 2) {
@@ -346,7 +377,7 @@ function detectLoop() {
     for (let y = 0; y < vh; y += sampleStep) {
       for (let x = 0; x < zoneWidth; x += 2) {
         const idx = (y * zoneWidth + x) * 4;
-        const dr = Math.abs(current.data[idx]     - state.prevFrame.data[idx]);
+        const dr = Math.abs(current.data[idx] - state.prevFrame.data[idx]);
         const dg = Math.abs(current.data[idx + 1] - state.prevFrame.data[idx + 1]);
         const db = Math.abs(current.data[idx + 2] - state.prevFrame.data[idx + 2]);
         totalDiff += (dr + dg + db) / 3;
@@ -366,10 +397,10 @@ function detectLoop() {
   requestAnimationFrame(detectLoop);
 }
 
-function triggerFinish() {
+function triggerFinish(): void {
   if (state.phase !== 'running') return;
   state.phase = 'done';
-  cancelAnimationFrame(state.timerRaf);
+  if (state.timerRaf !== null) cancelAnimationFrame(state.timerRaf);
 
   const finalMs = performance.now() - state.startTime;
   state.elapsed = finalMs;
@@ -384,7 +415,7 @@ function triggerFinish() {
 }
 
 // ── Result screen ──────────────────────────────────────
-function showResult(ms) {
+function showResult(ms: number): void {
   stopCamera();
   saveResult(state.distance, ms);
   resultDistance.textContent = state.distance + ' YARDS';
@@ -392,28 +423,28 @@ function showResult(ms) {
   showScreen('result');
 }
 
-document.getElementById('btn-retry').addEventListener('click', async () => {
+document.getElementById('btn-retry')!.addEventListener('click', async () => {
   await startCamera();
 });
 
-document.getElementById('btn-home').addEventListener('click', () => {
+document.getElementById('btn-home')!.addEventListener('click', () => {
   stopCamera();
   router.navigate('/');
 });
 
 // ── Cancel from camera ─────────────────────────────────
-document.getElementById('btn-cancel').addEventListener('click', () => {
+document.getElementById('btn-cancel')!.addEventListener('click', () => {
   stopCamera();
   state.phase = 'idle';
   router.navigate('/');
 });
 
-function stopCamera() {
+function stopCamera(): void {
   state.phase = 'idle';
-  cancelAnimationFrame(state.timerRaf);
+  if (state.timerRaf !== null) cancelAnimationFrame(state.timerRaf);
   countdownOverlay.classList.add('hidden');
   if (state.stream) {
-    state.stream.getTracks().forEach(t => t.stop());
+    state.stream.getTracks().forEach((t) => t.stop());
     state.stream = null;
   }
   video.srcObject = null;
@@ -421,35 +452,35 @@ function stopCamera() {
 }
 
 // ── Settings ───────────────────────────────────────────
-document.getElementById('btn-settings').addEventListener('click', () => {
+document.getElementById('btn-settings')!.addEventListener('click', () => {
   router.navigate('/settings');
 });
 
-document.getElementById('btn-settings-back').addEventListener('click', () => {
+document.getElementById('btn-settings-back')!.addEventListener('click', () => {
   router.navigate('/');
 });
 
 sensitivitySlider.addEventListener('input', () => {
   state.sensitivity = parseInt(sensitivitySlider.value);
-  sensitivityVal.textContent = state.sensitivity;
+  sensitivityVal.textContent = String(state.sensitivity);
 });
 
 // Live sensitivity preview using front camera
-let previewStream = null;
-let previewRaf = null;
-let previewPrevFrame = null;
+let previewStream: MediaStream | null = null;
+let previewRaf: number | null = null;
+let previewPrevFrame: ImageData | null = null;
 const previewCanvas = document.createElement('canvas');
-const previewCtx = previewCanvas.getContext('2d', { willReadFrequently: true });
+const previewCtx = previewCanvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
 const previewVideo = document.createElement('video');
 previewVideo.muted = true;
 previewVideo.playsInline = true;
 
-const motionBars = document.querySelectorAll('.motion-bar-fill');
+const motionBars = document.querySelectorAll<HTMLElement>('.motion-bar-fill');
 
-async function startSensitivityPreview() {
+async function startSensitivityPreview(): Promise<void> {
   try {
     previewStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment' }, audio: false
+      video: { facingMode: 'environment' }, audio: false,
     });
     previewVideo.srcObject = previewStream;
     await previewVideo.play();
@@ -457,16 +488,16 @@ async function startSensitivityPreview() {
   } catch { /* no preview if no camera */ }
 }
 
-function stopSensitivityPreview() {
-  cancelAnimationFrame(previewRaf);
+function stopSensitivityPreview(): void {
+  if (previewRaf !== null) cancelAnimationFrame(previewRaf);
   if (previewStream) {
-    previewStream.getTracks().forEach(t => t.stop());
+    previewStream.getTracks().forEach((t) => t.stop());
     previewStream = null;
   }
   previewPrevFrame = null;
 }
 
-function previewLoop() {
+function previewLoop(): void {
   if (!previewStream) return;
   const vw = previewVideo.videoWidth;
   const vh = previewVideo.videoHeight;
@@ -485,7 +516,7 @@ function previewLoop() {
       for (let y = 0; y < vh; y += sampleStep) {
         for (let x = 0; x < zoneWidth; x += 2) {
           const idx = (y * zoneWidth + x) * 4;
-          const dr = Math.abs(current.data[idx]     - previewPrevFrame.data[idx]);
+          const dr = Math.abs(current.data[idx] - previewPrevFrame.data[idx]);
           const dg = Math.abs(current.data[idx + 1] - previewPrevFrame.data[idx + 1]);
           const db = Math.abs(current.data[idx + 2] - previewPrevFrame.data[idx + 2]);
           totalDiff += (dr + dg + db) / 3;
@@ -495,8 +526,8 @@ function previewLoop() {
       const avgDiff = Math.min(totalDiff / samples, 100);
       const pct = (avgDiff / 100) * 100;
 
-      // Update 5 bars with slight stagger for visual effect
-      motionBars.forEach((bar, i) => {
+      // Update bars with slight stagger for visual effect
+      motionBars.forEach((bar) => {
         const variation = (Math.random() - 0.5) * 15;
         bar.style.height = Math.max(4, Math.min(100, pct + variation)) + '%';
         bar.style.background = avgDiff > state.sensitivity ? 'var(--green)' : 'var(--muted)';
@@ -524,23 +555,23 @@ router.on('/history/:dist', (params) => {
 });
 
 router.on('/settings', () => {
-  sensitivitySlider.value = state.sensitivity;
-  sensitivityVal.textContent = state.sensitivity;
+  sensitivitySlider.value = String(state.sensitivity);
+  sensitivityVal.textContent = String(state.sensitivity);
   showScreen('settings');
   startSensitivityPreview();
 }, () => {
   stopSensitivityPreview();
-  localStorage.setItem('sensitivity', state.sensitivity);
+  localStorage.setItem('sensitivity', String(state.sensitivity));
 });
 
 // ── Init ───────────────────────────────────────────────
-(function init() {
+(function init(): void {
   // Set default active distance button
-  document.querySelector(`.dist-btn[data-dist="${state.distance}"]`).classList.add('active');
+  document.querySelector(`.dist-btn[data-dist="${state.distance}"]`)!.classList.add('active');
   router.start();
 
   // Register service worker
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
 })();
