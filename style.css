@@ -127,12 +127,27 @@ html, body {
   max-width: 320px;
 }
 
+.history-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
 .history-section h3 {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--muted);
-  margin-bottom: 10px;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--green);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .history-list {
@@ -174,6 +189,76 @@ html, body {
   font-size: 0.85rem;
   text-align: center;
   padding: 12px;
+}
+
+/* ── HISTORY (full page) ── */
+#screen-history {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding-top: 60px;
+  gap: 20px;
+  background: var(--bg);
+}
+
+.history-page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.history-page-head h2 {
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.history-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.tab-btn {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--surface2);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  border-color: var(--green);
+  color: var(--green);
+  background: rgba(0,255,136,0.08);
+}
+
+.history-list-full {
+  max-height: none;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.history-list-full .history-item {
+  gap: 10px;
+}
+
+.history-item .item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.btn-delete {
+  background: none;
+  border: none;
+  color: var(--red);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
 }
 
 /* ── CAMERA SCREEN ── */

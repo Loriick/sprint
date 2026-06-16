@@ -18,6 +18,7 @@ const screens = {
   camera: document.getElementById('screen-camera'),
   result: document.getElementById('screen-result'),
   settings: document.getElementById('screen-settings'),
+  history: document.getElementById('screen-history'),
 };
 
 const video = document.getElementById('video');
@@ -34,6 +35,8 @@ const zoneLabel = document.getElementById('zone-label');
 const resultDistance = document.getElementById('result-distance');
 const resultTime = document.getElementById('result-time');
 const historyList = document.getElementById('history-list');
+const historyPageList = document.getElementById('history-page-list');
+const historyTabs = document.querySelectorAll('.tab-btn');
 
 const sensitivitySlider = document.getElementById('sensitivity-slider');
 const sensitivityVal = document.getElementById('sensitivity-val');
@@ -126,8 +129,14 @@ function getHistory() {
 
 function saveResult(dist, timeMs) {
   const history = getHistory();
-  history.unshift({ dist, timeMs, date: Date.now() });
+  const id = (crypto.randomUUID && crypto.randomUUID()) || `${Date.now()}-${Math.random()}`;
+  history.unshift({ id, dist, timeMs, date: Date.now() });
   if (history.length > 50) history.length = 50;
+  localStorage.setItem('history', JSON.stringify(history));
+}
+
+function deleteResult(id) {
+  const history = getHistory().filter(h => h.id !== id);
   localStorage.setItem('history', JSON.stringify(history));
 }
 
@@ -153,6 +162,58 @@ function renderHistory() {
 function formatTime(ms) {
   return (ms / 1000).toFixed(2) + 's';
 }
+
+// ── History page (full, filterable by distance, deletable) ──
+function renderHistoryPage(distFilter) {
+  historyTabs.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.dist === distFilter);
+  });
+
+  const history = getHistory().filter(h => distFilter === 'all' || String(h.dist) === distFilter);
+
+  if (!history.length) {
+    historyPageList.innerHTML = '<p class="empty-history">Aucun résultat</p>';
+    return;
+  }
+
+  historyPageList.innerHTML = history.map(h => {
+    const d = new Date(h.date);
+    const dateStr = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
+      + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return `
+      <div class="history-item">
+        <div class="item-info">
+          <span class="dist-label">${h.dist} yards</span>
+          <span class="date-label">${dateStr}</span>
+        </div>
+        <span class="time-val">${formatTime(h.timeMs)}</span>
+        <button class="btn-delete" data-id="${h.id}" aria-label="Supprimer">✕</button>
+      </div>`;
+  }).join('');
+}
+
+historyPageList.addEventListener('click', (e) => {
+  const btn = e.target.closest('.btn-delete');
+  if (!btn) return;
+  deleteResult(btn.dataset.id);
+  const activeTab = document.querySelector('.tab-btn.active');
+  renderHistoryPage(activeTab ? activeTab.dataset.dist : 'all');
+});
+
+historyTabs.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const dist = btn.dataset.dist;
+    router.navigate(dist === 'all' ? '/history' : `/history/${dist}`);
+  });
+});
+
+document.getElementById('btn-view-history').addEventListener('click', () => {
+  router.navigate('/history');
+});
+
+document.getElementById('btn-history-back').addEventListener('click', () => {
+  router.navigate('/');
+});
 
 // ── Distance selection ─────────────────────────────────
 document.querySelectorAll('.dist-btn').forEach(btn => {
@@ -450,6 +511,16 @@ function previewLoop() {
 router.on('/', () => {
   renderHistory();
   showScreen('home');
+});
+
+router.on('/history', () => {
+  renderHistoryPage('all');
+  showScreen('history');
+});
+
+router.on('/history/:dist', (params) => {
+  renderHistoryPage(params.dist);
+  showScreen('history');
 });
 
 router.on('/settings', () => {
