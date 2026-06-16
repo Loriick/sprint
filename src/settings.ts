@@ -69,7 +69,7 @@ function previewLoop(): void {
       motionBars.forEach((bar) => {
         const variation = (Math.random() - 0.5) * 15;
         bar.style.height = Math.max(4, Math.min(100, pct + variation)) + '%';
-        bar.style.background = avgDiff > state.sensitivity ? 'var(--green)' : 'var(--muted)';
+        bar.style.background = avgDiff > state.sensitivity ? 'var(--accent)' : 'var(--text-muted)';
       });
     }
     previewPrevFrame = current;

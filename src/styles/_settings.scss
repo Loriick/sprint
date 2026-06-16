@@ -21,7 +21,7 @@
 
   label {
     font-size: 0.85rem;
-    color: var(--muted);
+    color: var(--text-muted);
     display: flex;
     justify-content: space-between;
 
@@ -34,13 +34,13 @@
 
 input[type=range] {
   width: 100%;
-  accent-color: var(--green);
+  accent-color: var(--accent);
   height: 6px;
 }
 
 .setting-desc {
   font-size: 0.75rem;
-  color: var(--muted);
+  color: var(--text-muted);
   line-height: 1.5;
 }
 
@@ -60,7 +60,7 @@ input[type=range] {
 .motion-bar {
   width: 12px;
   height: 40px;
-  background: var(--surface2);
+  background: var(--surface-2);
   border-radius: 4px;
   overflow: hidden;
   display: flex;
@@ -69,13 +69,13 @@ input[type=range] {
 
 .motion-bar-fill {
   width: 100%;
-  background: var(--green);
+  background: var(--accent);
   transition: height 0.05s;
   border-radius: 4px;
 }
 
 .threshold-line-label {
   font-size: 0.7rem;
-  color: var(--muted);
+  color: var(--text-muted);
   text-align: center;
 }

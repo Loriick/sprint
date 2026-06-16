@@ -6,23 +6,25 @@
 
 .result-distance {
   font-size: 0.9rem;
-  color: var(--muted);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 2px;
 }
 
 .result-time {
+  font-family: 'Saira Condensed', 'Archivo', sans-serif;
   font-size: 5rem;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
-  color: var(--green);
+  color: var(--accent);
+  text-shadow: 0 0 30px color-mix(in srgb, var(--accent) 35%, transparent);
   letter-spacing: -2px;
   line-height: 1;
 }
 
 .result-unit {
   font-size: 1.5rem;
-  color: var(--muted);
+  color: var(--text-muted);
   font-weight: 400;
 }
 

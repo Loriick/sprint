@@ -5,12 +5,14 @@
 }
 
 .app-title {
-  font-size: 2rem;
+  font-family: 'Saira Condensed', 'Archivo', sans-serif;
+  font-size: 2.2rem;
   font-weight: 800;
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
 
   span {
-    color: var(--green);
+    color: var(--accent);
   }
 }
 
@@ -23,9 +25,9 @@
   width: 80px;
   height: 80px;
   border-radius: 16px;
-  border: 2px solid var(--surface2);
+  border: 2px solid var(--surface-2);
   background: var(--surface);
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 1.1rem;
   font-weight: 700;
   cursor: pointer;
@@ -42,8 +44,9 @@
   }
 
   &.active {
-    border-color: var(--green);
-    color: var(--green);
-    background: rgba(0,255,136,0.08);
+    border-color: var(--accent);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 25%, transparent);
   }
 }

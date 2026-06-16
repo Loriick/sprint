@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="theme-color" content="#000000">
+  <meta name="theme-color" content="#0A0B0D">
   <title>Sprint Timer</title>
   <link rel="manifest" href="/manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&family=Saira+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/src/styles/main.scss">
 </head>
 <body>
@@ -17,7 +20,7 @@
     <h1 class="app-title">Sprint<span>⚡</span>Timer</h1>
 
     <div>
-      <p style="font-size:0.8rem;color:var(--muted);text-align:center;margin-bottom:12px;">CHOISIR LA DISTANCE</p>
+      <p class="picker-label">CHOISIR LA DISTANCE</p>
       <div class="distance-picker">
         <button class="dist-btn" data-dist="10">10<span class="unit">yards</span></button>
         <button class="dist-btn" data-dist="20">20<span class="unit">yards</span></button>
