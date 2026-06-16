@@ -2,6 +2,34 @@
 #screen-home {
   gap: 32px;
   background: var(--bg);
+  position: relative;
+}
+
+.lang-toggle {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  background: var(--surface-2);
+  border-radius: 999px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.lang-btn {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+
+  &.active {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
 }
 
 .app-title {

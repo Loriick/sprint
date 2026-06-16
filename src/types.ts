@@ -1,4 +1,5 @@
 export type Phase = 'idle' | 'countdown' | 'running' | 'done';
+export type Lang = 'fr' | 'en';
 
 export interface AppState {
   distance: number;
@@ -9,6 +10,7 @@ export interface AppState {
   timerRaf: number | null;
   prevFrame: ImageData | null;
   stream: MediaStream | null;
+  lang: Lang;
 }
 
 export interface HistoryEntry {

@@ -1,4 +1,7 @@
-import type { AppState } from './types';
+import type { AppState, Lang } from './types';
+
+const storedLang = localStorage.getItem('lang');
+const lang: Lang = storedLang === 'en' ? 'en' : 'fr';
 
 export const state: AppState = {
   distance: 10,
@@ -9,4 +12,5 @@ export const state: AppState = {
   timerRaf: null,
   prevFrame: null,
   stream: null,
+  lang,
 };
