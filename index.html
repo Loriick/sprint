@@ -17,10 +17,15 @@
 
   <!-- ── HOME ── -->
   <div id="screen-home" class="screen">
+    <div id="lang-toggle" class="lang-toggle">
+      <button class="lang-btn" data-lang="fr">FR</button>
+      <button class="lang-btn" data-lang="en">EN</button>
+    </div>
+
     <h1 class="app-title">Sprint<span>⚡</span>Timer</h1>
 
     <div>
-      <p class="picker-label">CHOISIR LA DISTANCE</p>
+      <p class="picker-label" data-i18n="home_kicker">CHOISIR LA DISTANCE</p>
       <div class="distance-picker">
         <button class="dist-btn" data-dist="10">10<span class="unit">yards</span></button>
         <button class="dist-btn" data-dist="20">20<span class="unit">yards</span></button>
@@ -29,17 +34,17 @@
       </div>
     </div>
 
-    <button id="btn-start" class="btn-primary">▶ Démarrer</button>
+    <button id="btn-start" class="btn-primary">▶ <span data-i18n="home_start">DÉMARRER</span></button>
 
     <div class="history-section">
       <div class="history-section-head">
-        <h3>Derniers résultats</h3>
-        <button id="btn-view-history" class="link-btn">Voir tout →</button>
+        <h3 data-i18n="home_recent">Derniers résultats</h3>
+        <button id="btn-view-history" class="link-btn" data-i18n="home_seeall">Voir tout →</button>
       </div>
       <div id="history-list" class="history-list"></div>
     </div>
 
-    <button id="btn-settings" class="btn-secondary">⚙ Réglages</button>
+    <button id="btn-settings" class="btn-secondary">⚙ <span data-i18n="home_settings">Réglages</span></button>
   </div>
 
   <!-- ── CAMERA ── -->
@@ -50,7 +55,7 @@
     <!-- Detection zone line -->
     <div class="cam-overlay">
       <div id="detection-zone" class="detection-zone">
-        <span id="zone-label" class="zone-label">LIGNE D'ARRIVÉE</span>
+        <span id="zone-label" class="zone-label" data-i18n="cam_finish_line">LIGNE D'ARRIVÉE</span>
       </div>
     </div>
 
@@ -62,16 +67,16 @@
     <!-- Countdown overlay -->
     <div id="countdown-overlay" class="hidden">
       <div id="countdown-number" class="countdown-number">5</div>
-      <div id="countdown-label" class="countdown-label">Préparez-vous</div>
+      <div id="countdown-label" class="countdown-label" data-i18n="cam_get_ready">Préparez-vous</div>
     </div>
 
     <!-- Bottom bar -->
     <div class="cam-controls">
       <div class="cam-info">
-        Placez la caméra <strong>face à la ligne d'arrivée</strong>.<br>
-        Distance : <span id="cam-distance-label">–</span>
+        <span data-i18n="cam_instruction">Placez la caméra face à la ligne d'arrivée.</span><br>
+        <span data-i18n="cam_distance_label">Distance :</span> <span id="cam-distance-label">–</span>
       </div>
-      <button id="btn-cancel" class="btn-cancel">✕ Annuler</button>
+      <button id="btn-cancel" class="btn-cancel" data-i18n="cam_cancel">✕ Annuler</button>
     </div>
 
     <!-- Camera error -->
@@ -81,43 +86,43 @@
   <!-- ── RESULT ── -->
   <div id="screen-result" class="screen hidden">
     <p class="result-distance" id="result-distance">10 YARDS</p>
-    <p id="result-pb-pill" class="result-pb-pill hidden">★ Nouveau record</p>
+    <p id="result-pb-pill" class="result-pb-pill hidden" data-i18n="result_pb">★ Nouveau record</p>
     <div id="result-time" class="result-time">0.00<span class="result-unit">s</span></div>
 
     <div class="result-stats">
       <div class="result-stat-card">
-        <span class="result-stat-label">Vitesse</span>
+        <span class="result-stat-label" data-i18n="result_speed">Vitesse</span>
         <div class="result-stat-value">
           <span id="result-speed-primary">0.0</span><span class="result-stat-unit">km/h</span>
         </div>
         <span class="result-stat-secondary" id="result-speed-secondary">0.0 mph</span>
       </div>
       <div class="result-stat-card">
-        <span class="result-stat-label">vs record</span>
+        <span class="result-stat-label" data-i18n="result_vsbest">vs record</span>
         <div class="result-stat-value" id="result-vs-best">–</div>
         <span class="result-stat-secondary" id="result-best-time"></span>
       </div>
     </div>
 
     <div class="result-actions">
-      <button id="btn-retry" class="btn-primary">↺ Relancer</button>
-      <button id="btn-home" class="btn-secondary">← Accueil</button>
+      <button id="btn-retry" class="btn-primary">↺ <span data-i18n="result_retry_label">Relancer</span></button>
+      <button id="btn-home" class="btn-secondary">← <span data-i18n="result_home_label">Accueil</span></button>
     </div>
   </div>
 
   <!-- ── SETTINGS ── -->
   <div id="screen-settings" class="screen hidden">
-    <h2>Réglages</h2>
+    <h2 data-i18n="settings_title">Réglages</h2>
 
     <div class="setting-row">
       <label>
-        Sensibilité de détection
+        <span data-i18n="settings_sensitivity">Sensibilité de détection</span>
         <span id="sensitivity-val">30</span>
       </label>
       <input type="range" id="sensitivity-slider" min="10" max="80" step="1">
       <p class="setting-desc">
-        <strong>Bas (10–25)</strong> → très réactif, risque de faux départ.<br>
-        <strong>Haut (40–80)</strong> → moins réactif, pour environnements avec beaucoup de mouvement.
+        <strong data-i18n="settings_low">Bas (10–25)</strong> <span data-i18n="settings_low_desc">→ très réactif, risque de faux départ.</span><br>
+        <strong data-i18n="settings_high">Haut (40–80)</strong> <span data-i18n="settings_high_desc">→ moins réactif, pour environnements avec beaucoup de mouvement.</span>
       </p>
     </div>
 
@@ -127,21 +132,21 @@
       <div class="motion-bar"><div class="motion-bar-fill" style="height:10%"></div></div>
       <div class="motion-bar"><div class="motion-bar-fill" style="height:10%"></div></div>
       <div class="motion-bar"><div class="motion-bar-fill" style="height:10%"></div></div>
-      <span class="threshold-line-label">Aperçu mouvement<br>en direct</span>
+      <span class="threshold-line-label"><span data-i18n="settings_preview_label">Aperçu mouvement</span><br><span data-i18n="settings_preview_label2">en direct</span></span>
     </div>
 
-    <button id="btn-settings-back" class="btn-primary" style="max-width:320px;width:100%;">← Retour</button>
+    <button id="btn-settings-back" class="btn-primary" style="max-width:320px;width:100%;" data-i18n="settings_back">← Retour</button>
   </div>
 
   <!-- ── HISTORY ── -->
   <div id="screen-history" class="screen hidden">
     <div class="history-page-head">
-      <h2>Historique</h2>
-      <button id="btn-history-back" class="btn-secondary">← Retour</button>
+      <h2 data-i18n="history_title">Historique</h2>
+      <button id="btn-history-back" class="btn-secondary" data-i18n="history_back">← Retour</button>
     </div>
 
     <div id="history-tabs" class="history-tabs">
-      <button class="tab-btn" data-dist="all">Tous</button>
+      <button class="tab-btn" data-dist="all" data-i18n="history_tab_all">Tous</button>
       <button class="tab-btn" data-dist="10">10 yards</button>
       <button class="tab-btn" data-dist="20">20 yards</button>
       <button class="tab-btn" data-dist="30">30 yards</button>
@@ -150,22 +155,22 @@
 
     <div id="history-stats" class="history-stats">
       <div class="history-stat">
-        <span class="history-stat-label">Record</span>
+        <span class="history-stat-label" data-i18n="history_stat_best">Record</span>
         <span class="history-stat-value" id="history-stat-best">–</span>
       </div>
       <div class="history-stat">
-        <span class="history-stat-label">Moyenne</span>
+        <span class="history-stat-label" data-i18n="history_stat_avg">Moyenne</span>
         <span class="history-stat-value" id="history-stat-avg">–</span>
       </div>
       <div class="history-stat">
-        <span class="history-stat-label">Sprints</span>
+        <span class="history-stat-label" data-i18n="history_stat_count">Sprints</span>
         <span class="history-stat-value" id="history-stat-count">0</span>
       </div>
     </div>
 
     <div class="history-chart-card">
-      <p class="history-chart-title">Progression</p>
-      <p class="history-chart-caption">plus rapide = plus haut</p>
+      <p class="history-chart-title" data-i18n="history_chart_title">Progression</p>
+      <p class="history-chart-caption" data-i18n="history_chart_caption">plus rapide = plus haut</p>
       <div id="history-chart" class="history-chart"></div>
     </div>
 

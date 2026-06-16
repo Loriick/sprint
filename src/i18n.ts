@@ -1,0 +1,74 @@
+import { state } from './state';
+import type { Lang } from './types';
+
+const STR: Record<string, Record<Lang, string>> = {
+  home_kicker: { fr: 'CHOISIR LA DISTANCE', en: 'CHOOSE DISTANCE' },
+  home_start: { fr: 'DÉMARRER', en: 'START' },
+  home_recent: { fr: 'Derniers résultats', en: 'Recent results' },
+  home_seeall: { fr: 'Voir tout →', en: 'See all →' },
+  home_settings: { fr: 'Réglages', en: 'Settings' },
+  home_empty_history: { fr: 'Aucun résultat encore', en: 'No runs yet' },
+
+  cam_finish_line: { fr: "LIGNE D'ARRIVÉE", en: 'FINISH LINE' },
+  cam_get_ready: { fr: 'PRÉPAREZ-VOUS', en: 'GET READY' },
+  cam_go_label: { fr: 'EN POSITION · PARTEZ !', en: 'GET SET · GO!' },
+  cam_instruction: { fr: 'Placez la caméra face à la ligne d\'arrivée.', en: 'Point the camera at the finish line.' },
+  cam_distance_label: { fr: 'Distance :', en: 'Distance:' },
+  cam_cancel: { fr: '✕ Annuler', en: '✕ Cancel' },
+  cam_error: { fr: 'Impossible d\'accéder à la caméra.', en: 'Could not access the camera.' },
+
+  result_pb: { fr: '★ Nouveau record', en: '★ New record' },
+  result_speed: { fr: 'Vitesse', en: 'Speed' },
+  result_vsbest: { fr: 'vs record', en: 'vs best' },
+  result_record_word: { fr: '★ Record', en: '★ Best' },
+  result_previous: { fr: 'Ancien :', en: 'Previous:' },
+  result_record: { fr: 'Record :', en: 'Best:' },
+  result_retry_label: { fr: 'Relancer', en: 'Run again' },
+  result_home_label: { fr: 'Accueil', en: 'Home' },
+
+  settings_title: { fr: 'Réglages', en: 'Settings' },
+  settings_sensitivity: { fr: 'Sensibilité de détection', en: 'Detection sensitivity' },
+  settings_low: { fr: 'Bas (10–25)', en: 'Low (10–25)' },
+  settings_low_desc: { fr: '→ très réactif, risque de faux départ.', en: '→ very reactive, risk of false start.' },
+  settings_high: { fr: 'Haut (40–80)', en: 'High (40–80)' },
+  settings_high_desc: { fr: '→ moins réactif, pour environnements avec beaucoup de mouvement.', en: '→ less reactive, for busy environments.' },
+  settings_preview_label: { fr: 'Aperçu mouvement', en: 'Live motion' },
+  settings_preview_label2: { fr: 'en direct', en: 'preview' },
+  settings_back: { fr: '← Retour', en: '← Back' },
+
+  history_title: { fr: 'Historique', en: 'History' },
+  history_back: { fr: '← Retour', en: '← Back' },
+  history_tab_all: { fr: 'Tous', en: 'All' },
+  history_stat_best: { fr: 'Record', en: 'Best' },
+  history_stat_avg: { fr: 'Moyenne', en: 'Average' },
+  history_stat_count: { fr: 'Sprints', en: 'Runs' },
+  history_chart_title: { fr: 'Progression', en: 'Progress' },
+  history_chart_caption: { fr: 'plus rapide = plus haut', en: 'faster = taller' },
+  history_empty: { fr: 'Aucun résultat', en: 'No runs' },
+};
+
+export function t(key: string): string {
+  return STR[key] ? STR[key][state.lang] : key;
+}
+
+export function getLang(): Lang {
+  return state.lang;
+}
+
+export function setLang(lang: Lang): void {
+  state.lang = lang;
+  localStorage.setItem('lang', lang);
+  document.documentElement.lang = lang;
+  applyI18n();
+}
+
+export function applyI18n(): void {
+  document.documentElement.lang = state.lang;
+  document.querySelectorAll<HTMLElement>('[data-i18n]').forEach((el) => {
+    const key = el.dataset.i18n as string;
+    el.textContent = t(key);
+  });
+  document.querySelectorAll<HTMLButtonElement>('.lang-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.lang === state.lang);
+  });
+}

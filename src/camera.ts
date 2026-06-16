@@ -1,5 +1,6 @@
 import { beepGo, beepLow, beepStop } from './audio';
 import { getBest, saveResult, speedKmh, speedMph } from './history';
+import { t } from './i18n';
 import { router } from './router';
 import { showScreen } from './screens';
 import { state } from './state';
@@ -41,7 +42,7 @@ export async function startCamera(): Promise<void> {
 
 function showCameraError(err: Error): void {
   const box = document.getElementById('camera-error') as HTMLElement;
-  box.textContent = 'Impossible d\'accéder à la caméra. ' + (err.message || err);
+  box.textContent = t('cam_error') + ' ' + (err.message || err);
   box.classList.remove('hidden');
 }
 
@@ -73,7 +74,7 @@ function startCountdown(): void {
     const s = steps[i++];
     countdownNumber.textContent = s.text;
     countdownNumber.classList.toggle('go', !!s.isGo);
-    countdownLabel.textContent = s.isGo ? 'EN POSITION · PARTEZ !' : 'PRÉPAREZ-VOUS';
+    countdownLabel.textContent = s.isGo ? t('cam_go_label') : t('cam_get_ready');
     s.action();
     setTimeout(tick, s.isGo ? 800 : 1000);
   }
@@ -87,7 +88,7 @@ function startRun(): void {
   state.startTime = performance.now();
   state.prevFrame = null;
   timerValue.classList.add('running');
-  zoneLabel.textContent = 'LIGNE D\'ARRIVÉE';
+  zoneLabel.textContent = t('cam_finish_line');
   detectionZone.classList.remove('triggered');
 
   function tick(): void {
@@ -189,15 +190,15 @@ function showResult(ms: number): void {
   resultPbPill.classList.toggle('hidden', !isPB);
 
   if (isPB) {
-    resultVsBest.textContent = '★ Record';
-    resultBestTime.textContent = prevBest == null ? '' : `Ancien : ${(prevBest / 1000).toFixed(2)}s`;
+    resultVsBest.textContent = t('result_record_word');
+    resultBestTime.textContent = prevBest == null ? '' : `${t('result_previous')} ${(prevBest / 1000).toFixed(2)}s`;
     resultVsBest.classList.remove('slower');
   } else {
     const deltaS = Math.abs(ms - (prevBest as number)) / 1000;
     const faster = ms < (prevBest as number);
     resultVsBest.textContent = (faster ? '↓ ' : '↑ ') + deltaS.toFixed(2) + 's';
     resultVsBest.classList.toggle('slower', !faster);
-    resultBestTime.textContent = `Record : ${((prevBest as number) / 1000).toFixed(2)}s`;
+    resultBestTime.textContent = `${t('result_record')} ${((prevBest as number) / 1000).toFixed(2)}s`;
   }
 
   showScreen('result');
@@ -208,7 +209,7 @@ export function stopCamera(): void {
   if (state.timerRaf !== null) cancelAnimationFrame(state.timerRaf);
   countdownOverlay.classList.add('hidden');
   if (state.stream) {
-    state.stream.getTracks().forEach((t) => t.stop());
+    state.stream.getTracks().forEach((track) => track.stop());
     state.stream = null;
   }
   video.srcObject = null;

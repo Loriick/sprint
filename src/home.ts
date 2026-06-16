@@ -1,22 +1,25 @@
 import { getAudioCtx } from './audio';
 import { startCamera } from './camera';
 import { formatTime, getHistory } from './history';
+import { getLang, setLang, t } from './i18n';
 import { router } from './router';
 import { showScreen } from './screens';
 import { state } from './state';
+import type { Lang } from './types';
 
 const historyList = document.getElementById('history-list') as HTMLElement;
 
 function renderHistory(): void {
   const history = getHistory();
   if (!history.length) {
-    historyList.innerHTML = '<p class="empty-history">Aucun résultat encore</p>';
+    historyList.innerHTML = `<p class="empty-history">${t('home_empty_history')}</p>`;
     return;
   }
+  const locale = getLang() === 'fr' ? 'fr-FR' : 'en-US';
   historyList.innerHTML = history.slice(0, 8).map((h) => {
     const d = new Date(h.date);
-    const dateStr = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
-      + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })
+      + ' ' + d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
     return `
       <div class="history-item">
         <span class="dist-label">${h.dist} yards</span>
@@ -41,6 +44,13 @@ export function init(): void {
     // Unlock audio context on user gesture
     getAudioCtx();
     await startCamera();
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.lang-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setLang(btn.dataset.lang as Lang);
+      renderHistory();
+    });
   });
 
   router.on('/', () => {

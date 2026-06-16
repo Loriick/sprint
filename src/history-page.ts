@@ -1,4 +1,5 @@
 import { deleteResult, formatTime, getHistory, speedKmh } from './history';
+import { getLang, t } from './i18n';
 import { router } from './router';
 import { showScreen } from './screens';
 
@@ -40,14 +41,15 @@ function renderHistoryPage(distFilter: string): void {
   }).join('');
 
   if (!history.length) {
-    historyPageList.innerHTML = '<p class="empty-history">Aucun résultat</p>';
+    historyPageList.innerHTML = `<p class="empty-history">${t('history_empty')}</p>`;
     return;
   }
 
+  const locale = getLang() === 'fr' ? 'fr-FR' : 'en-US';
   historyPageList.innerHTML = history.map((h) => {
     const d = new Date(h.date);
-    const dateStr = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
-      + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })
+      + ' ' + d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
     const isBest = best !== null && h.timeMs === best;
     return `
       <div class="history-item${isBest ? ' is-best' : ''}">
