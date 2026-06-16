@@ -1,10 +1,22 @@
 import { router } from './router';
 import { showScreen } from './screens';
 import { state } from './state';
+import type { Units } from './types';
 
 const sensitivitySlider = document.getElementById('sensitivity-slider') as HTMLInputElement;
 const sensitivityVal = document.getElementById('sensitivity-val') as HTMLElement;
 const motionBars = document.querySelectorAll<HTMLElement>('.motion-bar-fill');
+const unitsButtons = document.querySelectorAll<HTMLButtonElement>('.units-btn');
+const toggleSound = document.getElementById('toggle-sound') as HTMLButtonElement;
+const toggleHaptics = document.getElementById('toggle-haptics') as HTMLButtonElement;
+
+function syncToggleStates(): void {
+  unitsButtons.forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.units === state.units);
+  });
+  toggleSound.classList.toggle('on', state.sound);
+  toggleHaptics.classList.toggle('on', state.haptics);
+}
 
 // Live sensitivity preview using front camera
 let previewStream: MediaStream | null = null;
@@ -91,9 +103,30 @@ export function init(): void {
     sensitivityVal.textContent = String(state.sensitivity);
   });
 
+  unitsButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.units = btn.dataset.units as Units;
+      localStorage.setItem('units', state.units);
+      syncToggleStates();
+    });
+  });
+
+  toggleSound.addEventListener('click', () => {
+    state.sound = !state.sound;
+    localStorage.setItem('sound', String(state.sound));
+    syncToggleStates();
+  });
+
+  toggleHaptics.addEventListener('click', () => {
+    state.haptics = !state.haptics;
+    localStorage.setItem('haptics', String(state.haptics));
+    syncToggleStates();
+  });
+
   router.on('/settings', () => {
     sensitivitySlider.value = String(state.sensitivity);
     sensitivityVal.textContent = String(state.sensitivity);
+    syncToggleStates();
     showScreen('settings');
     startSensitivityPreview();
   }, () => {

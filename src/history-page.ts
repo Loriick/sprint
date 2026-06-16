@@ -1,4 +1,4 @@
-import { deleteResult, formatTime, getHistory, speedKmh } from './history';
+import { deleteResult, formatTime, getHistory, speedForUnits, speedUnitLabel } from './history';
 import { getLang, t } from './i18n';
 import { router } from './router';
 import { showScreen } from './screens';
@@ -26,7 +26,7 @@ function renderHistoryPage(distFilter: string): void {
 
   // chronological order (oldest first) for the chart
   const chronological = [...history].reverse();
-  const speeds = chronological.map((h) => speedKmh(h.dist, h.timeMs));
+  const speeds = chronological.map((h) => speedForUnits(h.dist, h.timeMs));
   const maxSpeed = speeds.length ? Math.max(...speeds) : 0;
   const minSpeed = speeds.length ? Math.min(...speeds) : 0;
   const range = maxSpeed - minSpeed;
@@ -46,6 +46,7 @@ function renderHistoryPage(distFilter: string): void {
   }
 
   const locale = getLang() === 'fr' ? 'fr-FR' : 'en-US';
+  const unitLabel = speedUnitLabel();
   historyPageList.innerHTML = history.map((h) => {
     const d = new Date(h.date);
     const dateStr = d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })
@@ -58,7 +59,7 @@ function renderHistoryPage(distFilter: string): void {
           <span class="date-label">${dateStr}</span>
         </div>
         <span class="time-val">${formatTime(h.timeMs)}</span>
-        <span class="speed-label">${speedKmh(h.dist, h.timeMs).toFixed(1)} km/h</span>
+        <span class="speed-label">${speedForUnits(h.dist, h.timeMs).toFixed(1)} ${unitLabel}</span>
         <button class="btn-delete" data-id="${h.id}" aria-label="Supprimer">✕</button>
       </div>`;
   }).join('');
