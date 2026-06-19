@@ -1,45 +1,61 @@
 import React from 'react';
 import { StyleSheet, View, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors } from '../theme';
 
 const { width, height } = Dimensions.get('window');
 
 export default function AuroraBackground() {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {/* Base dark */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#030308' }]} />
+
+      {/* Cyan orb — top right */}
       <LinearGradient
-        colors={[colors.bg, '#1A0533', colors.bg]}
-        locations={[0, 0.5, 1]}
-        style={StyleSheet.absoluteFill}
+        colors={['rgba(0,229,255,0.22)', 'transparent']}
+        style={styles.orbCyan}
       />
+
+      {/* Purple orb — top left */}
       <LinearGradient
-        colors={['rgba(139,92,246,0.4)', 'transparent']}
-        style={styles.blob}
+        colors={['rgba(98,0,255,0.25)', 'transparent']}
+        style={styles.orbPurple}
       />
+
+      {/* Pink orb — bottom center */}
       <LinearGradient
-        colors={['rgba(236,72,153,0.2)', 'transparent']}
-        style={styles.blobSecondary}
+        colors={['rgba(255,64,129,0.18)', 'transparent']}
+        style={styles.orbPink}
       />
     </View>
   );
 }
 
+const ORB = width * 0.85;
+
 const styles = StyleSheet.create({
-  blob: {
+  orbCyan: {
     position: 'absolute',
-    top: -80,
-    right: -80,
-    width: width * 0.7,
-    height: width * 0.7,
-    borderRadius: (width * 0.7) / 2,
+    top: -ORB * 0.3,
+    right: -ORB * 0.25,
+    width: ORB,
+    height: ORB,
+    borderRadius: ORB / 2,
   },
-  blobSecondary: {
+  orbPurple: {
     position: 'absolute',
-    top: height * 0.3,
-    left: -60,
-    width: width * 0.5,
-    height: width * 0.5,
-    borderRadius: (width * 0.5) / 2,
+    top: -ORB * 0.1,
+    left: -ORB * 0.3,
+    width: ORB * 0.9,
+    height: ORB * 0.9,
+    borderRadius: (ORB * 0.9) / 2,
+  },
+  orbPink: {
+    position: 'absolute',
+    bottom: height * 0.05,
+    left: width * 0.1,
+    width: ORB * 0.75,
+    height: ORB * 0.75,
+    borderRadius: (ORB * 0.75) / 2,
   },
 });

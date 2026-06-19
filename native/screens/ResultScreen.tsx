@@ -19,27 +19,9 @@ import {
 } from '../src/history';
 import { useStore } from '../src/store';
 import { t } from '../src/i18n';
+import { colors, spacing, radius, shadow } from '../src/theme';
+import AuroraBackground from '../src/components/AuroraBackground';
 
-// ---------------------------------------------------------------------------
-// Design tokens
-// ---------------------------------------------------------------------------
-const colors = {
-  bg: '#08080F',
-  surface: 'rgba(255,255,255,0.06)',
-  surfaceBorder: 'rgba(139,92,246,0.25)',
-  surface2: 'rgba(255,255,255,0.10)',
-  accent: '#8B5CF6',
-  accentPink: '#EC4899',
-  accentGlow: 'rgba(139,92,246,0.3)',
-  text: '#FFFFFF',
-  textMuted: 'rgba(255,255,255,0.5)',
-  textDim: 'rgba(255,255,255,0.3)',
-  danger: '#EF4444',
-};
-
-// ---------------------------------------------------------------------------
-// Types / navigation
-// ---------------------------------------------------------------------------
 type RootStackParamList = {
   Home: undefined;
   Camera: undefined;
@@ -48,41 +30,25 @@ type RootStackParamList = {
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Result'>;
 
-// ---------------------------------------------------------------------------
-// ResultScreen
-// ---------------------------------------------------------------------------
 export default function ResultScreen({ navigation, route }: Props) {
   const { ms, distance } = route.params;
   const units = useStore((s) => s.units);
 
   const [prevBest, setPrevBest] = useState<number | null>(null);
   const [isPB, setIsPB] = useState(false);
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-
     (async () => {
-      // Load previous best BEFORE saving
       const best = await getBest(distance);
       if (cancelled) return;
       setPrevBest(best);
-
-      // Determine PB
-      const isNewBest = best === null || ms < best;
-      setIsPB(isNewBest);
-
-      // Save result
+      setIsPB(best === null || ms < best);
       await saveResult(distance, ms);
-      if (!cancelled) setSaved(true);
     })();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [distance, ms]);
 
-  // Speed values
   const speedKm = speedKmh(distance, ms);
   const speedMp = speedMph(distance, ms);
   const primarySpeed = units === 'imperial' ? speedMp : speedKm;
@@ -90,240 +56,226 @@ export default function ResultScreen({ navigation, route }: Props) {
   const primaryLabel = units === 'imperial' ? 'mph' : 'km/h';
   const secondaryLabel = units === 'imperial' ? 'km/h' : 'mph';
 
-  // Delta vs record
   const deltaMs = prevBest !== null ? ms - prevBest : null;
-  const deltaSeconds = deltaMs !== null ? (deltaMs / 1000).toFixed(2) : null;
+  const deltaSeconds = deltaMs !== null ? (Math.abs(deltaMs) / 1000).toFixed(2) : null;
   const deltaFaster = deltaMs !== null && deltaMs < 0;
 
-  // Share handler
   const handleShare = async () => {
-    const msg = `${distance} yards — ${formatTime(ms)} (${primarySpeed.toFixed(1)} ${primaryLabel})`;
-    try {
-      await Share.share({ message: msg });
-    } catch {
-      // silently ignore
-    }
+    const msg = `${distance} yards — ${formatTime(ms)} (${primarySpeed.toFixed(1)} ${primaryLabel}) 🏃‍♂️`;
+    try { await Share.share({ message: msg }); } catch { /* ignore */ }
   };
 
   return (
     <View style={styles.root}>
-      {/* Aurora background */}
-      <LinearGradient
-        colors={['#08080F', 'rgba(139,92,246,0.15)', '#08080F']}
-        locations={[0, 0.5, 1]}
-        style={StyleSheet.absoluteFill}
-      />
+      <AuroraBackground />
 
       <SafeAreaView style={styles.safeArea}>
-        {/* Distance label */}
-        <Text style={styles.distanceLabel}>{distance} YARDS</Text>
 
-        {/* PB pill */}
+        {/* Kicker */}
+        <Text style={styles.kicker}>{distance} YARDS</Text>
+
+        {/* PB badge */}
         {isPB && (
-          <LinearGradient
-            colors={[colors.accent, colors.accentPink]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.pbPill}
-          >
-            <Text style={styles.pbText}>{t('result_pb')}</Text>
-          </LinearGradient>
+          <View style={styles.pbBadge}>
+            <LinearGradient
+              colors={[colors.accent, '#00BFFF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.pbGradient}
+            >
+              <Text style={styles.pbText}>✦ {t('result_pb')}</Text>
+            </LinearGradient>
+          </View>
         )}
 
-        {/* Main timer */}
-        <Text style={styles.mainTimer}>{formatTime(ms)}</Text>
+        {/* Main time */}
+        <View style={styles.timerBlock}>
+          <Text style={styles.mainTimer}>{formatTime(ms)}</Text>
+          <Text style={styles.timerSub}>secondes</Text>
+        </View>
 
-        {/* Stats row */}
+        {/* Stats */}
         <View style={styles.statsRow}>
-          {/* Speed card */}
           <View style={styles.statCard}>
-            <Text style={styles.statCardLabel}>{t('result_speed')}</Text>
-            <Text style={styles.statCardValue}>
-              {primarySpeed.toFixed(1)}{' '}
-              <Text style={styles.statCardUnit}>{primaryLabel}</Text>
-            </Text>
-            <Text style={styles.statCardSecondary}>
-              {secondarySpeed.toFixed(1)} {secondaryLabel}
-            </Text>
+            <Text style={styles.statLabel}>{t('result_speed')}</Text>
+            <Text style={styles.statValue}>{primarySpeed.toFixed(1)}</Text>
+            <Text style={styles.statUnit}>{primaryLabel}</Text>
+            <Text style={styles.statSub}>{secondarySpeed.toFixed(1)} {secondaryLabel}</Text>
           </View>
 
-          {/* vs Record card */}
           <View style={styles.statCard}>
-            <Text style={styles.statCardLabel}>{t('result_vsbest')}</Text>
+            <Text style={styles.statLabel}>{t('result_vsbest')}</Text>
             {deltaSeconds !== null ? (
-              <Text
-                style={[
-                  styles.statCardValue,
-                  deltaFaster ? styles.fasterText : styles.slowerText,
-                ]}
-              >
-                {deltaFaster ? '↓' : '↑'} {Math.abs(Number(deltaSeconds)).toFixed(2)}s
-              </Text>
+              <>
+                <Text style={[styles.statValue, deltaFaster ? styles.fasterText : styles.slowerText]}>
+                  {deltaFaster ? '−' : '+'}{deltaSeconds}
+                </Text>
+                <Text style={styles.statUnit}>s</Text>
+              </>
             ) : (
-              <Text style={[styles.statCardValue, styles.fasterText]}>–</Text>
+              <Text style={[styles.statValue, styles.fasterText]}>–</Text>
             )}
             {prevBest !== null && (
-              <Text style={styles.statCardSecondary}>
-                {t('result_record')} {formatTime(prevBest)}
-              </Text>
+              <Text style={styles.statSub}>PB {formatTime(prevBest)}</Text>
             )}
           </View>
         </View>
 
         {/* Actions */}
         <View style={styles.actions}>
-          {/* Primary: Retry */}
-          <LinearGradient
-            colors={[colors.accent, colors.accentPink]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.primaryBtnGradient}
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Camera')}
+            activeOpacity={0.85}
+            style={styles.retryWrap}
           >
-            <TouchableOpacity
-              style={styles.primaryBtn}
-              onPress={() => navigation.navigate('Camera')}
+            <LinearGradient
+              colors={[colors.accent, '#00BFFF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={[styles.retryBtn, shadow.accent]}
             >
-              <Text style={styles.primaryBtnText}>↺ {t('result_retry_label')}</Text>
-            </TouchableOpacity>
-          </LinearGradient>
+              <Text style={styles.retryText}>↺  {t('result_retry_label')}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
 
-          {/* Secondary row */}
           <View style={styles.secondaryRow}>
-            <TouchableOpacity style={styles.secondaryBtn} onPress={handleShare}>
-              <Text style={styles.secondaryBtnText}>↑ {t('result_share_label')}</Text>
+            <TouchableOpacity style={styles.secondaryBtn} onPress={handleShare} activeOpacity={0.7}>
+              <Text style={styles.secondaryText}>↑  {t('result_share_label')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.secondaryBtn}
               onPress={() => navigation.navigate('Home')}
+              activeOpacity={0.7}
             >
-              <Text style={styles.secondaryBtnText}>← {t('result_home_label')}</Text>
+              <Text style={styles.secondaryText}>⌂  {t('result_home_label')}</Text>
             </TouchableOpacity>
           </View>
         </View>
+
       </SafeAreaView>
     </View>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
+  root: { flex: 1, backgroundColor: colors.bg },
   safeArea: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.lg,
   },
-  distanceLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
+
+  kicker: {
+    fontSize: 11,
     fontWeight: '700',
-    letterSpacing: 2,
+    color: colors.textDim,
+    letterSpacing: 3,
     textTransform: 'uppercase',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
-  pbPill: {
-    borderRadius: 20,
+
+  pbBadge: { marginBottom: spacing.md },
+  pbGradient: {
+    borderRadius: radius.full,
     paddingHorizontal: 18,
     paddingVertical: 6,
-    marginBottom: 16,
   },
   pbText: {
-    color: colors.text,
     fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  mainTimer: {
-    color: colors.text,
-    fontSize: 80,
     fontWeight: '800',
-    letterSpacing: -2,
-    marginBottom: 32,
+    color: colors.onAccent,
+    letterSpacing: 1,
   },
+
+  timerBlock: { alignItems: 'center', marginBottom: spacing.xl },
+  mainTimer: {
+    fontSize: 88,
+    fontWeight: '900',
+    color: colors.text,
+    letterSpacing: -3,
+    fontVariant: ['tabular-nums'],
+    textShadowColor: colors.accent,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 32,
+  },
+  timerSub: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textDim,
+    letterSpacing: 2,
+    marginTop: 4,
+  },
+
   statsRow: {
     flexDirection: 'row',
     gap: 12,
     width: '100%',
-    marginBottom: 40,
+    marginBottom: spacing.xl,
   },
   statCard: {
     flex: 1,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    borderRadius: 16,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
     padding: 16,
     alignItems: 'center',
   },
-  statCardLabel: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 6,
-  },
-  statCardValue: {
-    color: colors.text,
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  statCardUnit: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textMuted,
-  },
-  statCardSecondary: {
+  statLabel: {
+    fontSize: 10,
+    fontWeight: '700',
     color: colors.textDim,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  statValue: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+  },
+  statUnit: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  statSub: {
     fontSize: 11,
+    color: colors.textDim,
     marginTop: 4,
   },
-  fasterText: {
-    color: colors.accent,
-  },
-  slowerText: {
-    color: colors.danger,
-  },
-  // Actions
-  actions: {
-    width: '100%',
-    gap: 12,
-  },
-  primaryBtnGradient: {
-    borderRadius: 16,
-  },
-  primaryBtn: {
-    paddingVertical: 16,
+  fasterText: { color: colors.accent },
+  slowerText: { color: colors.hot },
+
+  actions: { width: '100%', gap: 12 },
+  retryWrap: {},
+  retryBtn: {
+    borderRadius: radius.xl,
+    paddingVertical: 18,
     alignItems: 'center',
   },
-  primaryBtnText: {
-    color: colors.text,
+  retryText: {
     fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontWeight: '800',
+    color: colors.onAccent,
+    letterSpacing: 1,
   },
-  secondaryRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
+  secondaryRow: { flexDirection: 'row', gap: 12 },
   secondaryBtn: {
     flex: 1,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    borderRadius: 16,
-    paddingVertical: 14,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    paddingVertical: 16,
     alignItems: 'center',
   },
-  secondaryBtnText: {
-    color: colors.textMuted,
+  secondaryText: {
     fontSize: 14,
     fontWeight: '600',
+    color: colors.textMuted,
   },
 });
