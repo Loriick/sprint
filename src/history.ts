@@ -2,7 +2,18 @@ import { state } from './state';
 import type { HistoryEntry } from './types';
 
 export function getHistory(): HistoryEntry[] {
-  try { return JSON.parse(localStorage.getItem('history') || '[]'); }
+  try {
+    const history: HistoryEntry[] = JSON.parse(localStorage.getItem('history') || '[]');
+    let dirty = false;
+    for (const h of history) {
+      if (!h.id) {
+        h.id = (crypto.randomUUID && crypto.randomUUID()) || `${Date.now()}-${Math.random()}`;
+        dirty = true;
+      }
+    }
+    if (dirty) localStorage.setItem('history', JSON.stringify(history));
+    return history;
+  }
   catch { return []; }
 }
 

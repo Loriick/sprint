@@ -21,6 +21,8 @@ export function confirmModal(title: string, message: string, confirmLabel: strin
   btnConfirm.textContent = confirmLabel;
   btnCancel.textContent = cancelLabel;
   overlay.classList.remove('hidden');
+  // Force a reflow so the opacity transition fires after display:none is removed
+  overlay.getBoundingClientRect();
   overlay.classList.add('visible');
   return new Promise((resolve) => {
     resolveCurrent = resolve;
