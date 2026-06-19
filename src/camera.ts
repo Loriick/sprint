@@ -54,14 +54,11 @@ function startCountdown(): void {
   timerValue.classList.remove('running');
   detectionZone.classList.remove('triggered');
 
-  const steps: { text: string; action: () => void; isGo?: boolean }[] = [
-    { text: '5', action: beepLow },
-    { text: '4', action: beepLow },
-    { text: '3', action: beepLow },
-    { text: '2', action: beepLow },
-    { text: '1', action: beepLow },
-    { text: 'GO !', action: () => { beepGo(); vibrate(80); }, isGo: true },
-  ];
+  const steps: { text: string; action: () => void; isGo?: boolean }[] = [];
+  for (let i = state.countdownDuration; i >= 1; i--) {
+    steps.push({ text: String(i), action: beepLow });
+  }
+  steps.push({ text: 'GO !', action: () => { beepGo(); vibrate(80); }, isGo: true });
 
   let i = 0;
 

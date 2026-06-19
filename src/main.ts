@@ -1,4 +1,5 @@
 import * as camera from './camera';
+import * as countdownPicker from './countdown-picker';
 import * as historyPage from './history-page';
 import * as home from './home';
 import { applyI18n } from './i18n';
@@ -13,6 +14,7 @@ settings.init();
 camera.init();
 result.init();
 modal.init();
+countdownPicker.init();
 
 applyI18n();
 router.start();
