@@ -1,23 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Camera, useCameraDevice, useCameraPermission, useFrameProcessor } from 'react-native-vision-camera';
+import { useSharedValue, runOnJS } from 'react-native-worklets-core';
+import { resize } from 'vision-camera-resize-plugin';
 import * as Haptics from 'expo-haptics';
-import { Audio } from 'expo-av';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { useStore } from '../src/store';
 import { t } from '../src/i18n';
 import { colors, fonts, spacing, radius } from '../src/theme';
 
-// ---------------------------------------------------------------------------
-// Navigation types
-// ---------------------------------------------------------------------------
 type RootStackParamList = {
   Home: undefined;
   Camera: undefined;
@@ -25,40 +18,32 @@ type RootStackParamList = {
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Camera'>;
-
-// ---------------------------------------------------------------------------
-// Local phase type (separate from global store phase to avoid side effects)
-// ---------------------------------------------------------------------------
 type LocalPhase = 'idle' | 'countdown' | 'running' | 'done';
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Pixel diff — identique à la PWA (comparaison pixel brut)
 // ---------------------------------------------------------------------------
+const FRAME_W = 48;
+const FRAME_H = 48;
+const FRAME_LEN = FRAME_W * FRAME_H * 3; // RGB
+
+function pixelDiff(a: Uint8Array, b: Uint8Array): number {
+  let total = 0;
+  for (let i = 0; i < FRAME_LEN; i++) {
+    total += Math.abs(a[i] - b[i]);
+  }
+  // Retourne la différence moyenne par canal (0-255)
+  return total / FRAME_LEN;
+}
+
+// Sensibilité store (10-80) → seuil pixel diff (5-30)
+// Plus la sensibilité est basse → seuil bas → déclenche facilement
+function sensitivityToThreshold(s: number): number {
+  return 5 + ((s - 10) / 70) * 25;
+}
+
 function formatElapsed(ms: number): string {
   return (ms / 1000).toFixed(2);
-}
-
-/** Simple string diff: sample N characters evenly and count mismatches. */
-function b64Diff(a: string, b: string): number {
-  if (!a || !b) return 0;
-  const len = Math.min(a.length, b.length);
-  if (len === 0) return 0;
-  const step = Math.max(1, Math.floor(len / 500));
-  let diff = 0;
-  let samples = 0;
-  for (let i = 0; i < len; i += step) {
-    if (a[i] !== b[i]) diff++;
-    samples++;
-  }
-  return samples > 0 ? (diff / samples) * 100 : 0;
-}
-
-// Sensitivity mapping: store value (1–100) → b64 diff threshold
-// Lower store sensitivity = lower threshold (more sensitive / triggers easier)
-// Higher store sensitivity = higher threshold (less sensitive)
-function sensitivityToThreshold(s: number): number {
-  // store sensitivity range: 10–80, threshold range: 0.5–8
-  return 0.5 + ((s - 10) / 70) * 7.5;
 }
 
 // ---------------------------------------------------------------------------
@@ -69,83 +54,132 @@ export default function CameraScreen({ navigation }: Props) {
   const sensitivity = useStore((s) => s.sensitivity);
   const distance = useStore((s) => s.distance);
   const haptics = useStore((s) => s.haptics);
-  const sound = useStore((s) => s.sound);
 
-  const [permission, requestPermission] = useCameraPermissions();
+  const { hasPermission, requestPermission } = useCameraPermission();
+  const device = useCameraDevice('back');
+
   const [phase, setPhase] = useState<LocalPhase>('idle');
   const [countdownNum, setCountdownNum] = useState<number | null>(null);
   const [isGo, setIsGo] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [triggered, setTriggered] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
-  const cameraRef = useRef<CameraView>(null);
   const phaseRef = useRef<LocalPhase>('idle');
-  const prevSnapshotRef = useRef<string | null>(null);
   const startTimeRef = useRef<number>(0);
-  const detectionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const maxTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const consecutiveHitsRef = useRef(0);
 
-  // Keep phaseRef in sync
+  // Shared values pour le frame processor (worklet thread)
+  const prevFrame = useSharedValue<Uint8Array | null>(null);
+  const isRunning = useSharedValue(false);
+  const warmupCount = useSharedValue(0);
+  const consecutiveHits = useSharedValue(0);
+  const thresholdValue = useSharedValue(sensitivityToThreshold(sensitivity));
+
   useEffect(() => {
     phaseRef.current = phase;
+    isRunning.value = phase === 'running';
+    if (phase !== 'running') {
+      warmupCount.value = 0;
+      consecutiveHits.value = 0;
+      prevFrame.value = null;
+    }
   }, [phase]);
 
-  // ---------------------------------------------------------------------------
-  // Permission request on mount
-  // ---------------------------------------------------------------------------
   useEffect(() => {
-    if (!permission?.granted) {
-      requestPermission();
-    }
-  }, []);
+    thresholdValue.value = sensitivityToThreshold(sensitivity);
+  }, [sensitivity]);
 
-  // ---------------------------------------------------------------------------
-  // Cleanup on unmount
-  // ---------------------------------------------------------------------------
   useEffect(() => {
-    return () => {
-      clearAllTimers();
-    };
+    if (!hasPermission) requestPermission();
   }, []);
 
   function clearAllTimers() {
-    if (detectionIntervalRef.current) {
-      clearInterval(detectionIntervalRef.current);
-      detectionIntervalRef.current = null;
-    }
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
-    if (maxTimeoutRef.current) {
-      clearTimeout(maxTimeoutRef.current);
-      maxTimeoutRef.current = null;
-    }
+    if (timerIntervalRef.current) { clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
+    if (maxTimeoutRef.current) { clearTimeout(maxTimeoutRef.current); maxTimeoutRef.current = null; }
     countdownTimeoutsRef.current.forEach(clearTimeout);
     countdownTimeoutsRef.current = [];
   }
 
-  // ---------------------------------------------------------------------------
-  // Audio beep via expo-av (sine-wave approximation using a short sound)
-  // We use Haptics as the primary feedback since generating tones requires
-  // bundled audio assets. Sound flag guards haptics too for simplicity.
-  // ---------------------------------------------------------------------------
+  useEffect(() => () => clearAllTimers(), []);
+
   async function playBeep(type: 'low' | 'go' | 'stop') {
-    if (haptics) {
-      try {
-        if (type === 'go' || type === 'stop') {
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } else {
-          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        }
-      } catch {
-        // silently ignore haptics errors
+    if (!haptics) return;
+    try {
+      if (type === 'go' || type === 'stop') {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
-    }
+    } catch { /* ignore */ }
   }
+
+  // ---------------------------------------------------------------------------
+  // Appelé depuis le worklet quand le mouvement est détecté
+  // ---------------------------------------------------------------------------
+  const onMotionDetected = useCallback((frameTime: number) => {
+    if (phaseRef.current !== 'running') return;
+    const finalMs = frameTime - startTimeRef.current;
+
+    phaseRef.current = 'done';
+    setPhase('done');
+    setElapsed(finalMs);
+    setTriggered(true);
+
+    clearAllTimers();
+    playBeep('stop');
+
+    setTimeout(() => {
+      navigation.navigate('Result', { ms: finalMs, distance });
+    }, 800);
+  }, [distance, navigation]);
+
+  // ---------------------------------------------------------------------------
+  // Frame processor — tourne sur le thread caméra, accès pixels bruts
+  // ---------------------------------------------------------------------------
+  const frameProcessor = useFrameProcessor((frame) => {
+    'worklet';
+    if (!isRunning.value) return;
+
+    const now = Date.now();
+
+    const resized = resize(frame, {
+      scale: { width: FRAME_W, height: FRAME_H },
+      pixelFormat: 'rgb',
+      dataType: 'uint8',
+    });
+
+    const current = new Uint8Array(resized.buffer);
+
+    // Warmup : 10 frames (~330ms) pour stabiliser l'exposition
+    warmupCount.value += 1;
+    if (warmupCount.value <= 10) {
+      prevFrame.value = current;
+      return;
+    }
+
+    const prev = prevFrame.value;
+    prevFrame.value = current;
+    if (!prev) return;
+
+    // Pixel diff réel (comme canvas getImageData dans la PWA)
+    let total = 0;
+    for (let i = 0; i < FRAME_LEN; i++) {
+      total += Math.abs(current[i] - prev[i]);
+    }
+    const avgDiff = total / FRAME_LEN;
+
+    if (avgDiff > thresholdValue.value) {
+      consecutiveHits.value += 1;
+      if (consecutiveHits.value >= 2) {
+        runOnJS(onMotionDetected)(now);
+      }
+    } else {
+      consecutiveHits.value = 0;
+    }
+  }, [isRunning, prevFrame, warmupCount, consecutiveHits, thresholdValue, onMotionDetected]);
 
   // ---------------------------------------------------------------------------
   // Countdown
@@ -154,7 +188,6 @@ export default function CameraScreen({ navigation }: Props) {
     setPhase('countdown');
     phaseRef.current = 'countdown';
     setTriggered(false);
-    prevSnapshotRef.current = null;
 
     const steps: Array<{ num: number | null; go: boolean; duration: number }> = [];
     for (let i = countdownDuration; i >= 1; i--) {
@@ -163,7 +196,7 @@ export default function CameraScreen({ navigation }: Props) {
     steps.push({ num: null, go: true, duration: 800 });
 
     let delay = 0;
-    steps.forEach((step, idx) => {
+    steps.forEach((step) => {
       const t1 = setTimeout(() => {
         if (phaseRef.current !== 'countdown') return;
         setCountdownNum(step.num);
@@ -174,7 +207,6 @@ export default function CameraScreen({ navigation }: Props) {
       delay += step.duration;
     });
 
-    // After all steps: hide countdown, start run
     const t2 = setTimeout(() => {
       if (phaseRef.current !== 'countdown') return;
       setCountdownNum(null);
@@ -184,154 +216,51 @@ export default function CameraScreen({ navigation }: Props) {
     countdownTimeoutsRef.current.push(t2);
   }, [countdownDuration, haptics]);
 
-  // ---------------------------------------------------------------------------
-  // Run
-  // ---------------------------------------------------------------------------
   const startRun = useCallback(() => {
     setPhase('running');
     phaseRef.current = 'running';
     startTimeRef.current = Date.now();
     setElapsed(0);
-    consecutiveHitsRef.current = 0;
 
-    let warmupFrames = 0;
-    const WARMUP = 8; // ~800ms pour que l'exposition caméra se stabilise
-
-    // Timer display update at ~60fps
     timerIntervalRef.current = setInterval(() => {
       if (phaseRef.current !== 'running') return;
       setElapsed(Date.now() - startTimeRef.current);
     }, 16);
 
-    // Motion detection at 10fps
-    detectionIntervalRef.current = setInterval(async () => {
-      if (phaseRef.current !== 'running') return;
-      if (!cameraRef.current) return;
-
-      const frameTime = Date.now();
-
-      try {
-        const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.05,
-          base64: true,
-          skipProcessing: true,
-        });
-
-        const b64 = photo?.base64 ?? null;
-        if (!b64) return;
-
-        warmupFrames++;
-        if (warmupFrames <= WARMUP) {
-          // Warmup: met à jour le baseline sans comparer
-          prevSnapshotRef.current = b64;
-          return;
-        }
-
-        const prev = prevSnapshotRef.current;
-        prevSnapshotRef.current = b64;
-
-        if (!prev) return;
-
-        const diff = b64Diff(prev, b64);
-        const threshold = sensitivityToThreshold(sensitivity);
-
-        if (diff > threshold) {
-          consecutiveHitsRef.current++;
-          if (consecutiveHitsRef.current >= 2) {
-            triggerFinish(frameTime);
-          }
-        } else {
-          consecutiveHitsRef.current = 0;
-        }
-      } catch {
-        // camera not ready — skip frame
-      }
-    }, 100);
-
-    // Max timeout: auto-cancel after 60s
     maxTimeoutRef.current = setTimeout(() => {
       if (phaseRef.current !== 'running') return;
       phaseRef.current = 'done';
       clearAllTimers();
       navigation.goBack();
     }, 60_000);
-  }, [sensitivity, navigation]);
+  }, [navigation]);
 
-  // ---------------------------------------------------------------------------
-  // Finish
-  // ---------------------------------------------------------------------------
-  const triggerFinish = useCallback((frameTime?: number) => {
-    if (phaseRef.current !== 'running') return;
-
-    // Use frameTime (captured before takePictureAsync) for accuracy
-    const finalMs = (frameTime ?? Date.now()) - startTimeRef.current;
-
-    setPhase('done');
-    phaseRef.current = 'done';
-    setElapsed(finalMs);
-    setTriggered(true);
-
-    if (detectionIntervalRef.current) {
-      clearInterval(detectionIntervalRef.current);
-      detectionIntervalRef.current = null;
-    }
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
-
-    playBeep('stop');
-
-    setTimeout(() => {
-      navigation.navigate('Result', { ms: finalMs, distance });
-    }, 800);
-  }, [distance, navigation, haptics]);
-
-  // ---------------------------------------------------------------------------
-  // Cancel
-  // ---------------------------------------------------------------------------
   const handleCancel = useCallback(() => {
-    phaseRef.current = 'done'; // stop any active loops
+    phaseRef.current = 'done';
     clearAllTimers();
     navigation.goBack();
   }, [navigation]);
 
-  // ---------------------------------------------------------------------------
-  // Camera ready → start countdown
-  // ---------------------------------------------------------------------------
   const handleCameraReady = useCallback(() => {
+    setIsReady(true);
     if (phaseRef.current === 'idle') {
-      // Small delay to let camera stabilise
       const t = setTimeout(() => {
-        if (phaseRef.current === 'idle') {
-          startCountdown();
-        }
+        if (phaseRef.current === 'idle') startCountdown();
       }, 500);
       countdownTimeoutsRef.current.push(t);
     }
   }, [startCountdown]);
 
   // ---------------------------------------------------------------------------
-  // Permission states
+  // Permission / device
   // ---------------------------------------------------------------------------
-  if (!permission) {
-    // Still loading permission status
-    return (
-      <View style={styles.root}>
-        <SafeAreaView style={styles.centered}>
-          <Text style={styles.errorText}>Checking camera permission…</Text>
-        </SafeAreaView>
-      </View>
-    );
-  }
-
-  if (!permission.granted) {
+  if (!hasPermission) {
     return (
       <View style={styles.root}>
         <SafeAreaView style={styles.centered}>
           <Text style={styles.errorText}>{t('cam_error')}</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={requestPermission}>
-            <Text style={styles.retryBtnText}>Retry</Text>
+            <Text style={styles.retryBtnText}>Autoriser</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.retryBtn, styles.cancelBtnAlt]} onPress={handleCancel}>
             <Text style={styles.retryBtnText}>{t('cam_cancel')}</Text>
@@ -341,36 +270,44 @@ export default function CameraScreen({ navigation }: Props) {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Render
-  // ---------------------------------------------------------------------------
+  if (!device) {
+    return (
+      <View style={styles.root}>
+        <SafeAreaView style={styles.centered}>
+          <Text style={styles.errorText}>Caméra indisponible</Text>
+          <TouchableOpacity style={[styles.retryBtn, styles.cancelBtnAlt]} onPress={handleCancel}>
+            <Text style={styles.retryBtnText}>{t('cam_cancel')}</Text>
+          </TouchableOpacity>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
   const showCountdownOverlay = phase === 'countdown';
   const showRunning = phase === 'running' || phase === 'done';
 
   return (
     <View style={styles.root}>
-      {/* Camera */}
-      <CameraView
-        ref={cameraRef}
+      <Camera
+        device={device}
+        isActive={true}
         style={StyleSheet.absoluteFill}
-        facing="back"
-        onCameraReady={handleCameraReady}
+        frameProcessor={frameProcessor}
+        onInitialized={handleCameraReady}
       />
 
-      {/* ── Top bar ── */}
       <SafeAreaView style={styles.overlay} pointerEvents="box-none">
+        {/* Top bar */}
         <View style={styles.topBar}>
           <TouchableOpacity onPress={handleCancel} style={styles.cancelBtn}>
             <Text style={styles.cancelText}>{t('cam_cancel')}</Text>
           </TouchableOpacity>
           <View style={styles.distancePill}>
-            <Text style={styles.distancePillText}>
-              {t('cam_distance_label')} {distance} m
-            </Text>
+            <Text style={styles.distancePillText}>{distance} m</Text>
           </View>
         </View>
 
-        {/* ── Detection zone indicator ── */}
+        {/* Zone indicator */}
         <View style={styles.zoneContainer} pointerEvents="none">
           <View style={[styles.zoneLine, triggered && styles.zoneLineTriggered]} />
           <Text style={[styles.zoneLabel, triggered && styles.zoneLabelTriggered]}>
@@ -378,7 +315,7 @@ export default function CameraScreen({ navigation }: Props) {
           </Text>
         </View>
 
-        {/* ── Bottom instruction / timer ── */}
+        {/* Timer */}
         <View style={styles.bottomArea}>
           {showRunning ? (
             <View style={styles.timerContainer}>
@@ -393,7 +330,7 @@ export default function CameraScreen({ navigation }: Props) {
         </View>
       </SafeAreaView>
 
-      {/* ── Countdown overlay ── */}
+      {/* Countdown overlay */}
       {showCountdownOverlay && (
         <View style={styles.countdownOverlay} pointerEvents="none">
           {isGo ? (
@@ -413,20 +350,10 @@ export default function CameraScreen({ navigation }: Props) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  overlay: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
+  root: { flex: 1, backgroundColor: '#000' },
+  overlay: { flex: 1, justifyContent: 'space-between' },
 
-  // Top bar
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -440,50 +367,32 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: radius.full,
   },
-  cancelText: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
-  },
+  cancelText: { color: colors.text, fontSize: 14, fontFamily: fonts.semiBold },
   distancePill: {
     backgroundColor: 'rgba(0,0,0,0.5)',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.full,
   },
-  distancePillText: {
-    color: colors.textMuted,
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
+  distancePillText: { color: colors.textMuted, fontSize: 13, fontFamily: fonts.bold },
 
-  // Detection zone
-  zoneContainer: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-  },
+  zoneContainer: { alignItems: 'center', flex: 1, justifyContent: 'center' },
   zoneLine: {
     width: 2,
     height: 140,
     backgroundColor: '#00E5FF',
     borderRadius: 2,
-    opacity: 0.9,
     shadowColor: '#00E5FF',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
     shadowRadius: 12,
     elevation: 10,
   },
-  zoneLineTriggered: {
-    backgroundColor: '#00E676',
-    shadowColor: '#00E676',
-  },
+  zoneLineTriggered: { backgroundColor: '#00E676', shadowColor: '#00E676' },
   zoneLabel: {
     color: '#00E5FF',
     fontSize: 10,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     letterSpacing: 2,
     marginTop: spacing.sm,
     textTransform: 'uppercase',
@@ -491,19 +400,13 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
-  zoneLabelTriggered: {
-    color: '#00E676',
-  },
+  zoneLabelTriggered: { color: '#00E676' },
 
-  // Bottom area
-  bottomArea: {
-    alignItems: 'center',
-    paddingBottom: spacing.xl,
-    paddingHorizontal: spacing.lg,
-  },
+  bottomArea: { alignItems: 'center', paddingBottom: spacing.xl, paddingHorizontal: spacing.lg },
   instruction: {
     color: colors.text,
     fontSize: 14,
+    fontFamily: fonts.regular,
     textAlign: 'center',
     backgroundColor: 'rgba(0,0,0,0.5)',
     paddingHorizontal: spacing.md,
@@ -531,19 +434,9 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 20,
   },
-  timerValueDone: {
-    color: '#00E676',
-    textShadowColor: '#00E676',
-  },
-  timerUnit: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 24,
-    fontWeight: '600',
-    marginBottom: 10,
-    marginLeft: 4,
-  },
+  timerValueDone: { color: '#00E676', textShadowColor: '#00E676' },
+  timerUnit: { color: 'rgba(255,255,255,0.5)', fontSize: 24, fontFamily: fonts.semiBold, marginBottom: 10, marginLeft: 4 },
 
-  // Countdown overlay
   countdownOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(3,3,8,0.75)',
@@ -568,39 +461,15 @@ const styles = StyleSheet.create({
   countdownLabel: {
     color: 'rgba(255,255,255,0.4)',
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     letterSpacing: 3,
     textTransform: 'uppercase',
     marginTop: spacing.md,
   },
 
-  // Permission error
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
-    backgroundColor: colors.bg,
-  },
-  errorText: {
-    color: colors.text,
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-  },
-  retryBtn: {
-    backgroundColor: colors.accent,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    marginBottom: spacing.md,
-  },
-  cancelBtnAlt: {
-    backgroundColor: colors.surfaceHigh,
-  },
-  retryBtnText: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '700',
-  },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl, backgroundColor: colors.bg },
+  errorText: { color: colors.text, fontSize: 16, fontFamily: fonts.regular, textAlign: 'center', marginBottom: spacing.lg },
+  retryBtn: { backgroundColor: colors.accent, paddingHorizontal: spacing.xl, paddingVertical: spacing.md, borderRadius: radius.md, marginBottom: spacing.md },
+  cancelBtnAlt: { backgroundColor: colors.surfaceHigh },
+  retryBtnText: { color: colors.onAccent, fontSize: 15, fontFamily: fonts.bold },
 });
