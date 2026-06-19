@@ -28,8 +28,7 @@
           "cameraPermission": "Sprint Timer utilise la caméra pour détecter le passage à la ligne d'arrivée.",
           "enableFrameProcessors": true
         }
-      ],
-      "react-native-worklets-core"
+      ]
     ]
   }
 }
