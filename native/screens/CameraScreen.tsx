@@ -86,6 +86,7 @@ export default function CameraScreen({ navigation }: Props) {
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const maxTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const consecutiveHitsRef = useRef(0);
 
   // Keep phaseRef in sync
   useEffect(() => {
@@ -191,6 +192,7 @@ export default function CameraScreen({ navigation }: Props) {
     phaseRef.current = 'running';
     startTimeRef.current = Date.now();
     setElapsed(0);
+    consecutiveHitsRef.current = 0;
 
     // Timer display update at ~60fps
     timerIntervalRef.current = setInterval(() => {
@@ -202,6 +204,9 @@ export default function CameraScreen({ navigation }: Props) {
     detectionIntervalRef.current = setInterval(async () => {
       if (phaseRef.current !== 'running') return;
       if (!cameraRef.current) return;
+
+      // Capture timestamp before takePictureAsync to compensate processing delay
+      const frameTime = Date.now();
 
       try {
         const photo = await cameraRef.current.takePictureAsync({
@@ -222,7 +227,13 @@ export default function CameraScreen({ navigation }: Props) {
         const threshold = sensitivityToThreshold(sensitivity);
 
         if (diff > threshold) {
-          triggerFinish();
+          consecutiveHitsRef.current++;
+          // Require 2 consecutive frames above threshold to avoid false positives
+          if (consecutiveHitsRef.current >= 2) {
+            triggerFinish(frameTime);
+          }
+        } else {
+          consecutiveHitsRef.current = 0;
         }
       } catch {
         // camera not ready yet — skip this frame
@@ -241,10 +252,11 @@ export default function CameraScreen({ navigation }: Props) {
   // ---------------------------------------------------------------------------
   // Finish
   // ---------------------------------------------------------------------------
-  const triggerFinish = useCallback(() => {
+  const triggerFinish = useCallback((frameTime?: number) => {
     if (phaseRef.current !== 'running') return;
 
-    const finalMs = Date.now() - startTimeRef.current;
+    // Use frameTime (captured before takePictureAsync) for accuracy
+    const finalMs = (frameTime ?? Date.now()) - startTimeRef.current;
 
     setPhase('done');
     phaseRef.current = 'done';
