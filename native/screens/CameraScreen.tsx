@@ -86,7 +86,6 @@ export default function CameraScreen({ navigation }: Props) {
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const maxTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const graceRef = useRef(false);
 
   // Keep phaseRef in sync
   useEffect(() => {
@@ -193,10 +192,6 @@ export default function CameraScreen({ navigation }: Props) {
     startTimeRef.current = Date.now();
     setElapsed(0);
 
-    // Grace period: ignore motion for 300ms after GO (phone moves when user starts)
-    graceRef.current = true;
-    setTimeout(() => { graceRef.current = false; }, 300);
-
     // Timer display update at ~60fps
     timerIntervalRef.current = setInterval(() => {
       if (phaseRef.current !== 'running') return;
@@ -206,7 +201,6 @@ export default function CameraScreen({ navigation }: Props) {
     // Motion detection at 10fps
     detectionIntervalRef.current = setInterval(async () => {
       if (phaseRef.current !== 'running') return;
-      if (graceRef.current) return; // still in grace period
       if (!cameraRef.current) return;
 
       try {
