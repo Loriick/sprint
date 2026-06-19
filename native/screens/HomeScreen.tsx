@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   ScrollView,
   Dimensions,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -34,6 +35,12 @@ export default function HomeScreen() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [best, setBest] = useState<number | null>(null);
 
+  // ── Animations ──
+  const slideX = useRef(new Animated.Value(0)).current;
+  const numOpacity = useRef(new Animated.Value(1)).current;
+  const startScale = useRef(new Animated.Value(1)).current;
+  const startGlow = useRef(new Animated.Value(0)).current;
+
   const loadData = useCallback(async () => {
     const entries = await getHistory();
     setHistory(entries.slice(0, 4));
@@ -45,12 +52,42 @@ export default function HomeScreen() {
 
   const distIdx = DISTANCES.indexOf(distance);
 
+  function animateDistChange(newDist: number, dir: 'left' | 'right') {
+    const outX = dir === 'right' ? -60 : 60;
+    const inX = dir === 'right' ? 60 : -60;
+    Animated.parallel([
+      Animated.timing(slideX, { toValue: outX, duration: 100, useNativeDriver: true }),
+      Animated.timing(numOpacity, { toValue: 0, duration: 80, useNativeDriver: true }),
+    ]).start(() => {
+      setDistance(newDist);
+      slideX.setValue(inX);
+      Animated.parallel([
+        Animated.spring(slideX, { toValue: 0, friction: 7, tension: 260, useNativeDriver: true }),
+        Animated.timing(numOpacity, { toValue: 1, duration: 120, useNativeDriver: true }),
+      ]).start();
+    });
+  }
+
   const prevDistance = () => {
-    if (distIdx > 0) setDistance(DISTANCES[distIdx - 1]);
+    if (distIdx > 0) animateDistChange(DISTANCES[distIdx - 1], 'left');
   };
 
   const nextDistance = () => {
-    if (distIdx < DISTANCES.length - 1) setDistance(DISTANCES[distIdx + 1]);
+    if (distIdx < DISTANCES.length - 1) animateDistChange(DISTANCES[distIdx + 1], 'right');
+  };
+
+  const onStartPressIn = () => {
+    Animated.parallel([
+      Animated.spring(startScale, { toValue: 0.93, friction: 10, tension: 300, useNativeDriver: true }),
+      Animated.timing(startGlow, { toValue: 1, duration: 100, useNativeDriver: false }),
+    ]).start();
+  };
+
+  const onStartPressOut = () => {
+    Animated.parallel([
+      Animated.spring(startScale, { toValue: 1, friction: 4, tension: 200, useNativeDriver: true }),
+      Animated.timing(startGlow, { toValue: 0, duration: 200, useNativeDriver: false }),
+    ]).start();
   };
 
   function formatDate(ts: number): string {
@@ -111,10 +148,12 @@ export default function HomeScreen() {
                 <Text style={styles.arrowText}>‹</Text>
               </TouchableOpacity>
 
-              <View style={styles.distanceCenter}>
+              <Animated.View
+                style={[styles.distanceCenter, { transform: [{ translateX: slideX }], opacity: numOpacity }]}
+              >
                 <Text style={styles.distanceNumber}>{distance}</Text>
                 <Text style={styles.distanceUnit}>YARDS</Text>
-              </View>
+              </Animated.View>
 
               <TouchableOpacity
                 style={[styles.arrowBtn, distIdx === DISTANCES.length - 1 && styles.arrowBtnDisabled]}
@@ -147,20 +186,30 @@ export default function HomeScreen() {
           </View>
 
           {/* START */}
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Camera')}
-            activeOpacity={0.88}
-            style={styles.startWrap}
-          >
-            <LinearGradient
-              colors={[colors.accent, '#00BFFF']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={[styles.startBtn, shadow.accent]}
+          <Animated.View style={[styles.startWrap, { transform: [{ scale: startScale }] }]}>
+            <Animated.View style={[
+              styles.startGlowRing,
+              {
+                opacity: startGlow,
+                shadowOpacity: startGlow as unknown as number,
+              },
+            ]} />
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Camera')}
+              onPressIn={onStartPressIn}
+              onPressOut={onStartPressOut}
+              activeOpacity={1}
             >
-              <Text style={styles.startText}>{t('home_start', lang)}</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+              <LinearGradient
+                colors={[colors.accent, '#00BFFF']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.startBtn}
+              >
+                <Text style={styles.startText}>{t('home_start', lang)}</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </Animated.View>
 
           {/* Recent history */}
           {history.length > 0 && (
@@ -338,7 +387,18 @@ const styles = StyleSheet.create({
   },
 
   // Start
-  startWrap: { marginBottom: spacing.xl },
+  startWrap: { marginBottom: spacing.xl, position: 'relative' },
+  startGlowRing: {
+    position: 'absolute',
+    inset: -8,
+    borderRadius: radius.xl + 8,
+    backgroundColor: 'transparent',
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 28,
+    elevation: 0,
+  },
   startBtn: {
     borderRadius: radius.xl,
     paddingVertical: 20,
