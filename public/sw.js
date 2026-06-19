@@ -1,4 +1,4 @@
-const CACHE = 'sprint-v2';
+const CACHE = 'sprint-v3';
 const CORE_FILES = ['/', '/manifest.json', '/icon.svg'];
 
 self.addEventListener('install', (e) => {
