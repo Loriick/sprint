@@ -13,7 +13,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { useStore } from '../src/store';
 import { t } from '../src/i18n';
-import { colors, spacing, radius } from '../src/theme';
+import { colors, fonts, spacing, radius } from '../src/theme';
 
 // ---------------------------------------------------------------------------
 // Navigation types
@@ -491,8 +491,8 @@ const styles = StyleSheet.create({
   timerValue: {
     color: '#FFFFFF',
     fontSize: 64,
-    fontWeight: '900',
-    letterSpacing: -2,
+    fontFamily: fonts.black,
+    letterSpacing: -1,
     fontVariant: ['tabular-nums'],
     textShadowColor: '#00E5FF',
     textShadowOffset: { width: 0, height: 0 },
@@ -519,9 +519,9 @@ const styles = StyleSheet.create({
   },
   countdownNumber: {
     color: '#FFFFFF',
-    fontSize: 128,
-    fontWeight: '900',
-    letterSpacing: -5,
+    fontSize: 144,
+    fontFamily: fonts.black,
+    letterSpacing: -4,
     textShadowColor: 'rgba(0,0,0,0.6)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 10,
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
     color: '#00E5FF',
     textShadowColor: '#00E5FF',
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 30,
+    textShadowRadius: 36,
   },
   countdownLabel: {
     color: 'rgba(255,255,255,0.4)',

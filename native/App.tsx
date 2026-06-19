@@ -1,7 +1,16 @@
 import React, { useEffect } from 'react';
+import { View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {
+  useFonts,
+  Outfit_400Regular,
+  Outfit_500Medium,
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+  Outfit_900Black,
+} from '@expo-google-fonts/outfit';
 import { useStore } from './src/store';
 import HomeScreen from './screens/HomeScreen';
 import CameraScreen from './screens/CameraScreen';
@@ -13,7 +22,7 @@ import { colors } from './src/theme';
 export type RootStackParamList = {
   Home: undefined;
   Camera: undefined;
-  Result: undefined;
+  Result: { ms: number; distance: number };
   History: undefined;
   Settings: undefined;
 };
@@ -22,19 +31,27 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const navTheme = {
   ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    background: colors.bg,
-    card: colors.bg,
-  },
+  colors: { ...DarkTheme.colors, background: colors.bg, card: colors.bg },
 };
 
 export default function App() {
   const loadPersistedSettings = useStore((s) => s.loadPersistedSettings);
 
+  const [fontsLoaded] = useFonts({
+    Outfit_400Regular,
+    Outfit_500Medium,
+    Outfit_600SemiBold,
+    Outfit_700Bold,
+    Outfit_900Black,
+  });
+
   useEffect(() => {
     loadPersistedSettings();
   }, [loadPersistedSettings]);
+
+  if (!fontsLoaded) {
+    return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  }
 
   return (
     <NavigationContainer theme={navTheme}>

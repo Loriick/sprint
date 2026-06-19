@@ -19,7 +19,7 @@ import {
 } from '../src/history';
 import { useStore } from '../src/store';
 import { t } from '../src/i18n';
-import { colors, spacing, radius, shadow } from '../src/theme';
+import { colors, fonts, spacing, radius, shadow } from '../src/theme';
 import AuroraBackground from '../src/components/AuroraBackground';
 
 type RootStackParamList = {
@@ -191,9 +191,9 @@ const styles = StyleSheet.create({
   timerBlock: { alignItems: 'center', marginBottom: spacing.xl },
   mainTimer: {
     fontSize: 88,
-    fontWeight: '900',
+    fontFamily: fonts.black,
     color: colors.text,
-    letterSpacing: -3,
+    letterSpacing: -2,
     fontVariant: ['tabular-nums'],
     textShadowColor: colors.accent,
     textShadowOffset: { width: 0, height: 0 },
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 28,
-    fontWeight: '800',
+    fontFamily: fonts.bold,
     color: colors.text,
     fontVariant: ['tabular-nums'],
   },
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   },
   retryText: {
     fontSize: 16,
-    fontWeight: '800',
+    fontFamily: fonts.bold,
     color: colors.onAccent,
     letterSpacing: 1,
   },

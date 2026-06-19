@@ -15,7 +15,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useStore } from '../src/store';
 import { getHistory, getBest, formatTime } from '../src/history';
 import { t } from '../src/i18n';
-import { colors, spacing, radius, shadow } from '../src/theme';
+import { colors, fonts, spacing, radius, shadow } from '../src/theme';
 import AuroraBackground from '../src/components/AuroraBackground';
 import type { RootStackParamList } from '../App';
 import type { HistoryEntry } from '../src/types';
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   langTextActive: { color: colors.onAccent },
   logo: {
     fontSize: 15,
-    fontWeight: '900',
+    fontFamily: fonts.black,
     color: colors.text,
     letterSpacing: 6,
   },
@@ -325,18 +325,18 @@ const styles = StyleSheet.create({
   },
   distanceCenter: { alignItems: 'center', minWidth: 140 },
   distanceNumber: {
-    fontSize: 96,
-    fontWeight: '900',
+    fontSize: 104,
+    fontFamily: fonts.black,
     color: colors.text,
-    letterSpacing: -4,
-    lineHeight: 100,
+    letterSpacing: -3,
+    lineHeight: 108,
     textShadowColor: colors.accent,
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 24,
   },
   distanceUnit: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.accent,
     letterSpacing: 4,
     marginTop: 4,
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
   },
   startText: {
     fontSize: 18,
-    fontWeight: '900',
+    fontFamily: fonts.black,
     color: colors.onAccent,
     letterSpacing: 4,
   },
