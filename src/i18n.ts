@@ -55,6 +55,11 @@ const STR: Record<string, Record<Lang, string>> = {
   delete_message: { fr: 'Cette action est irréversible.', en: 'This action cannot be undone.' },
   delete_confirm: { fr: 'Supprimer', en: 'Delete' },
   delete_cancel: { fr: 'Annuler', en: 'Cancel' },
+
+  picker_title: { fr: 'Compte à rebours', en: 'Countdown' },
+  picker_subtitle: { fr: 'Faites défiler pour choisir', en: 'Scroll to choose' },
+  picker_confirm: { fr: 'Démarrer →', en: 'Start →' },
+  picker_cancel: { fr: 'Annuler', en: 'Cancel' },
 };
 
 export function t(key: string): string {

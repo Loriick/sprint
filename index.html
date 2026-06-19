@@ -200,6 +200,22 @@
     <div id="history-page-list" class="history-list history-list-full"></div>
   </div>
 
+  <!-- ── COUNTDOWN PICKER ── -->
+  <div id="countdown-picker-modal" class="modal-overlay hidden">
+    <div class="modal-card picker-card">
+      <h3 class="modal-title" data-i18n="picker_title">Compte à rebours</h3>
+      <p class="modal-message" data-i18n="picker_subtitle">Faites défiler pour choisir</p>
+      <div class="drum-picker-wrap">
+        <div class="drum-picker-highlight"></div>
+        <div id="drum-picker" class="drum-picker"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="picker-cancel" class="btn-secondary" data-i18n="picker_cancel">Annuler</button>
+        <button id="picker-confirm" class="btn-primary picker-confirm-btn" data-i18n="picker_confirm">Démarrer →</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── CONFIRM MODAL ── -->
   <div id="confirm-modal" class="modal-overlay hidden">
     <div class="modal-card">

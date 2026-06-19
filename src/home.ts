@@ -1,7 +1,6 @@
-import { getAudioCtx } from './audio';
-import { startCamera } from './camera';
 import { formatTime, getHistory } from './history';
 import { getLang, setLang, t } from './i18n';
+import { showPicker } from './countdown-picker';
 import { router } from './router';
 import { showScreen } from './screens';
 import { state } from './state';
@@ -40,10 +39,8 @@ export function init(): void {
     });
   });
 
-  document.getElementById('btn-start')!.addEventListener('click', async () => {
-    // Unlock audio context on user gesture
-    getAudioCtx();
-    await startCamera();
+  document.getElementById('btn-start')!.addEventListener('click', () => {
+    showPicker();
   });
 
   document.querySelectorAll<HTMLButtonElement>('.lang-btn').forEach((btn) => {

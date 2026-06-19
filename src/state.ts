@@ -9,6 +9,7 @@ const units: Units = storedUnits === 'imperial' ? 'imperial' : 'metric';
 export const state: AppState = {
   distance: 10,
   sensitivity: parseInt(localStorage.getItem('sensitivity') || '30'),
+  countdownDuration: parseInt(localStorage.getItem('countdownDuration') || '5'),
   phase: 'idle',
   startTime: 0,
   elapsed: 0,

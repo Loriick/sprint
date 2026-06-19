@@ -5,6 +5,7 @@ export type Units = 'metric' | 'imperial';
 export interface AppState {
   distance: number;
   sensitivity: number;
+  countdownDuration: number;
   phase: Phase;
   startTime: number;
   elapsed: number;
