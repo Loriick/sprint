@@ -1,27 +1,28 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  ScrollView,
+  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useStore } from '../src/store';
-import { getHistory, formatTime } from '../src/history';
+import { getHistory, getBest, formatTime } from '../src/history';
 import { t } from '../src/i18n';
 import { colors, spacing, radius, shadow } from '../src/theme';
 import AuroraBackground from '../src/components/AuroraBackground';
-import GlassCard from '../src/components/GlassCard';
 import type { RootStackParamList } from '../App';
 import type { HistoryEntry } from '../src/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 const DISTANCES = [10, 20, 30, 40];
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const navigation = useNavigation<Nav>();
@@ -31,17 +32,26 @@ export default function HomeScreen() {
   const setLang = useStore((s) => s.setLang);
 
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [best, setBest] = useState<number | null>(null);
 
-  const loadHistory = useCallback(async () => {
+  const loadData = useCallback(async () => {
     const entries = await getHistory();
-    setHistory(entries.slice(0, 5));
-  }, []);
+    setHistory(entries.slice(0, 4));
+    const b = await getBest(distance);
+    setBest(b);
+  }, [distance]);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadHistory();
-    }, [loadHistory]),
-  );
+  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+
+  const distIdx = DISTANCES.indexOf(distance);
+
+  const prevDistance = () => {
+    if (distIdx > 0) setDistance(DISTANCES[distIdx - 1]);
+  };
+
+  const nextDistance = () => {
+    if (distIdx < DISTANCES.length - 1) setDistance(DISTANCES[distIdx + 1]);
+  };
 
   function formatDate(ts: number): string {
     const d = new Date(ts);
@@ -55,92 +65,95 @@ export default function HomeScreen() {
     <View style={styles.root}>
       <AuroraBackground />
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
           {/* Top bar */}
           <View style={styles.topBar}>
-            <View style={styles.langRow}>
+            <View style={styles.langPill}>
               <TouchableOpacity
                 style={[styles.langBtn, lang === 'fr' && styles.langBtnActive]}
                 onPress={() => setLang('fr')}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.langText, lang === 'fr' && styles.langTextActive]}>
-                  FR
-                </Text>
+                <Text style={[styles.langText, lang === 'fr' && styles.langTextActive]}>FR</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.langBtn, lang === 'en' && styles.langBtnActive]}
                 onPress={() => setLang('en')}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.langText, lang === 'en' && styles.langTextActive]}>
-                  EN
-                </Text>
+                <Text style={[styles.langText, lang === 'en' && styles.langTextActive]}>EN</Text>
               </TouchableOpacity>
             </View>
+
+            <Text style={styles.logo}>SPRINT</Text>
+
             <TouchableOpacity
-              style={styles.settingsBtn}
+              style={styles.iconBtn}
               onPress={() => navigation.navigate('Settings')}
               activeOpacity={0.7}
             >
-              <Text style={styles.settingsIcon}>⚙</Text>
+              <Text style={styles.iconBtnText}>⚙</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Title */}
-          <View style={styles.titleBlock}>
-            <Text style={styles.title}>Sprint⚡Timer</Text>
+          {/* Distance hero */}
+          <View style={styles.hero}>
+            <Text style={styles.heroLabel}>{t('home_kicker', lang)}</Text>
+
+            <View style={styles.distancePicker}>
+              <TouchableOpacity
+                style={[styles.arrowBtn, distIdx === 0 && styles.arrowBtnDisabled]}
+                onPress={prevDistance}
+                activeOpacity={0.6}
+                disabled={distIdx === 0}
+              >
+                <Text style={styles.arrowText}>‹</Text>
+              </TouchableOpacity>
+
+              <View style={styles.distanceCenter}>
+                <Text style={styles.distanceNumber}>{distance}</Text>
+                <Text style={styles.distanceUnit}>YARDS</Text>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.arrowBtn, distIdx === DISTANCES.length - 1 && styles.arrowBtnDisabled]}
+                onPress={nextDistance}
+                activeOpacity={0.6}
+                disabled={distIdx === DISTANCES.length - 1}
+              >
+                <Text style={styles.arrowText}>›</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Distance dots */}
+            <View style={styles.dots}>
+              {DISTANCES.map((d) => (
+                <TouchableOpacity key={d} onPress={() => setDistance(d)} activeOpacity={0.7}>
+                  <View style={[styles.dot, d === distance && styles.dotActive]} />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Personal best for selected distance */}
+            {best !== null ? (
+              <View style={styles.pbRow}>
+                <Text style={styles.pbLabel}>PB</Text>
+                <Text style={styles.pbValue}>{formatTime(best)}</Text>
+              </View>
+            ) : (
+              <Text style={styles.pbEmpty}>{t('home_empty_history', lang)}</Text>
+            )}
           </View>
 
-          {/* Distance picker */}
-          <Text style={styles.sectionLabel}>{t('home_kicker', lang)}</Text>
-          <View style={styles.distanceRow}>
-            {DISTANCES.map((d) => {
-              const active = d === distance;
-              return active ? (
-                <TouchableOpacity
-                  key={d}
-                  onPress={() => setDistance(d)}
-                  activeOpacity={0.85}
-                  style={styles.distBtnWrap}
-                >
-                  <LinearGradient
-                    colors={[colors.accent, colors.accentPink]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[styles.distBtn, styles.distBtnActive, shadow.accent]}
-                  >
-                    <Text style={styles.distBtnTextActive}>{d}</Text>
-                    <Text style={styles.distBtnUnit}>yd</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  key={d}
-                  onPress={() => setDistance(d)}
-                  activeOpacity={0.7}
-                  style={styles.distBtnWrap}
-                >
-                  <GlassCard style={styles.distBtn}>
-                    <Text style={styles.distBtnText}>{d}</Text>
-                    <Text style={styles.distBtnUnit}>yd</Text>
-                  </GlassCard>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          {/* START button */}
+          {/* START */}
           <TouchableOpacity
             onPress={() => navigation.navigate('Camera')}
-            activeOpacity={0.85}
+            activeOpacity={0.88}
             style={styles.startWrap}
           >
             <LinearGradient
-              colors={[colors.accent, colors.accentPink]}
+              colors={[colors.accent, '#00BFFF']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={[styles.startBtn, shadow.accent]}
@@ -150,33 +163,29 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           {/* Recent history */}
-          <View style={styles.historyHeader}>
-            <Text style={styles.historyTitle}>{t('home_recent', lang)}</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('History')} activeOpacity={0.7}>
-              <Text style={styles.seeAll}>{t('home_seeall', lang)}</Text>
-            </TouchableOpacity>
-          </View>
+          {history.length > 0 && (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>{t('home_recent', lang)}</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('History')} activeOpacity={0.7}>
+                  <Text style={styles.seeAll}>{t('home_seeall', lang)}</Text>
+                </TouchableOpacity>
+              </View>
 
-          {history.length === 0 ? (
-            <GlassCard style={styles.emptyCard}>
-              <Text style={styles.emptyText}>{t('home_empty_history', lang)}</Text>
-            </GlassCard>
-          ) : (
-            history.map((entry) => (
-              <GlassCard key={entry.id} style={styles.historyCard}>
-                <View style={styles.historyRow}>
-                  <View style={styles.historyDistWrap}>
-                    <Text style={styles.historyDist}>{entry.dist}</Text>
-                    <Text style={styles.historyDistUnit}>yd</Text>
+              {history.map((entry) => (
+                <View key={entry.id} style={styles.historyRow}>
+                  <View style={styles.historyLeft}>
+                    <Text style={styles.historyDist}>{entry.dist}<Text style={styles.historyUnit}> yd</Text></Text>
+                    <Text style={styles.historyDate}>{formatDate(entry.date)}</Text>
                   </View>
                   <Text style={styles.historyTime}>{formatTime(entry.timeMs)}</Text>
-                  <Text style={styles.historyDate}>{formatDate(entry.date)}</Text>
+                  <View style={styles.historyDivider} />
                 </View>
-              </GlassCard>
-            ))
+              ))}
+            </>
           )}
 
-          <View style={styles.bottomPad} />
+          <View style={{ height: spacing.xxl }} />
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -184,194 +193,218 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  scroll: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-  },
+  root: { flex: 1, backgroundColor: colors.bg },
+  safeArea: { flex: 1 },
+  scroll: { paddingHorizontal: spacing.md, paddingTop: spacing.sm },
+
+  // Top bar
   topBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: spacing.xl,
   },
-  langRow: {
+  langPill: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: colors.border,
     padding: 3,
     gap: 2,
   },
   langBtn: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     borderRadius: radius.full,
   },
-  langBtnActive: {
-    backgroundColor: colors.accent,
+  langBtnActive: { backgroundColor: colors.accent },
+  langText: { color: colors.textMuted, fontWeight: '700', fontSize: 12, letterSpacing: 0.5 },
+  langTextActive: { color: colors.onAccent },
+  logo: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: colors.text,
+    letterSpacing: 6,
   },
-  langText: {
-    color: colors.textMuted,
-    fontWeight: '600',
-    fontSize: 13,
-    letterSpacing: 0.5,
-  },
-  langTextActive: {
-    color: colors.onAccent,
-  },
-  settingsBtn: {
-    width: 40,
-    height: 40,
+  iconBtn: {
+    width: 38,
+    height: 38,
     borderRadius: radius.full,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  settingsIcon: {
-    fontSize: 18,
-    color: colors.textMuted,
-  },
-  titleBlock: {
+  iconBtnText: { fontSize: 16, color: colors.textMuted },
+
+  // Hero
+  hero: {
     alignItems: 'center',
-    marginBottom: spacing.xl,
+    paddingVertical: spacing.xl,
   },
-  title: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: colors.text,
-    letterSpacing: -0.5,
-  },
-  sectionLabel: {
+  heroLabel: {
     fontSize: 11,
     fontWeight: '700',
     color: colors.textDim,
-    letterSpacing: 2,
-    marginBottom: spacing.sm,
+    letterSpacing: 3,
     textTransform: 'uppercase',
+    marginBottom: spacing.lg,
   },
-  distanceRow: {
+  distancePicker: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.xl,
+    alignItems: 'center',
+    gap: spacing.lg,
   },
-  distBtnWrap: {
-    flex: 1,
-  },
-  distBtn: {
+  arrowBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    minHeight: 72,
   },
-  distBtnActive: {
-    borderWidth: 0,
+  arrowBtnDisabled: { opacity: 0.2 },
+  arrowText: {
+    fontSize: 32,
+    color: colors.text,
+    lineHeight: 36,
+    fontWeight: '300',
   },
-  distBtnText: {
-    fontSize: 22,
+  distanceCenter: { alignItems: 'center', minWidth: 140 },
+  distanceNumber: {
+    fontSize: 96,
+    fontWeight: '900',
+    color: colors.text,
+    letterSpacing: -4,
+    lineHeight: 100,
+    textShadowColor: colors.accent,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 24,
+  },
+  distanceUnit: {
+    fontSize: 13,
     fontWeight: '700',
-    color: colors.textMuted,
+    color: colors.accent,
+    letterSpacing: 4,
+    marginTop: 4,
   },
-  distBtnTextActive: {
-    fontSize: 22,
+  dots: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: spacing.lg,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.textDim,
+  },
+  dotActive: {
+    backgroundColor: colors.accent,
+    width: 20,
+    borderRadius: 3,
+  },
+  pbRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: spacing.md,
+    backgroundColor: colors.accentDim,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: colors.borderAccent,
+  },
+  pbLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.accent,
+    letterSpacing: 1.5,
+  },
+  pbValue: {
+    fontSize: 14,
     fontWeight: '700',
-    color: colors.onAccent,
+    color: colors.text,
   },
-  distBtnUnit: {
-    fontSize: 11,
+  pbEmpty: {
+    marginTop: spacing.md,
+    fontSize: 13,
     color: colors.textDim,
-    fontWeight: '500',
-    marginTop: 2,
   },
-  startWrap: {
-    marginBottom: spacing.xl,
-  },
+
+  // Start
+  startWrap: { marginBottom: spacing.xl },
   startBtn: {
     borderRadius: radius.xl,
-    paddingVertical: spacing.lg,
+    paddingVertical: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   startText: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '900',
     color: colors.onAccent,
-    letterSpacing: 2,
+    letterSpacing: 4,
   },
-  historyHeader: {
+
+  // History
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
-  historyTitle: {
-    fontSize: 18,
+  sectionTitle: {
+    fontSize: 13,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.textMuted,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   seeAll: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.accent,
     fontWeight: '600',
-  },
-  historyCard: {
-    marginBottom: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + spacing.xs,
   },
   historyRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 14,
+    position: 'relative',
   },
-  historyDistWrap: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 3,
-    width: 64,
-  },
+  historyLeft: { flex: 1 },
   historyDist: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.accent,
-  },
-  historyDistUnit: {
-    fontSize: 12,
-    color: colors.textDim,
-    fontWeight: '500',
-  },
-  historyTime: {
-    flex: 1,
-    fontSize: 22,
+    fontSize: 16,
     fontWeight: '700',
     color: colors.text,
-    textAlign: 'center',
+  },
+  historyUnit: {
+    fontSize: 12,
+    color: colors.textMuted,
+    fontWeight: '500',
   },
   historyDate: {
-    fontSize: 13,
-    color: colors.textMuted,
-    width: 64,
-    textAlign: 'right',
+    fontSize: 12,
+    color: colors.textDim,
+    marginTop: 2,
   },
-  emptyCard: {
-    paddingVertical: spacing.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
+  historyTime: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
   },
-  emptyText: {
-    color: colors.textMuted,
-    fontSize: 15,
-  },
-  bottomPad: {
-    height: spacing.xl,
+  historyDivider: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: colors.border,
   },
 });

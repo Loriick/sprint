@@ -11,37 +11,12 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { useStore } from '../src/store';
 import { t } from '../src/i18n';
+import { colors, spacing, radius } from '../src/theme';
+import AuroraBackground from '../src/components/AuroraBackground';
 
-// ---------------------------------------------------------------------------
-// Design tokens
-// ---------------------------------------------------------------------------
-const colors = {
-  bg: '#08080F',
-  surface: 'rgba(255,255,255,0.06)',
-  surfaceBorder: 'rgba(139,92,246,0.25)',
-  surface2: 'rgba(255,255,255,0.10)',
-  accent: '#8B5CF6',
-  accentPink: '#EC4899',
-  accentGlow: 'rgba(139,92,246,0.3)',
-  text: '#FFFFFF',
-  textMuted: 'rgba(255,255,255,0.5)',
-  textDim: 'rgba(255,255,255,0.3)',
-  danger: '#EF4444',
-};
-
-// ---------------------------------------------------------------------------
-// Types / navigation
-// ---------------------------------------------------------------------------
-type RootStackParamList = {
-  Home: undefined;
-  Settings: undefined;
-};
-
+type RootStackParamList = { Home: undefined; Settings: undefined };
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
-// ---------------------------------------------------------------------------
-// SettingsScreen
-// ---------------------------------------------------------------------------
 export default function SettingsScreen({ navigation }: Props) {
   const sensitivity = useStore((s) => s.sensitivity);
   const setSensitivity = useStore((s) => s.setSensitivity);
@@ -52,254 +27,194 @@ export default function SettingsScreen({ navigation }: Props) {
   const haptics = useStore((s) => s.haptics);
   const setHaptics = useStore((s) => s.setHaptics);
 
-  const decreaseSensitivity = () => {
-    if (sensitivity > 10) setSensitivity(sensitivity - 1);
-  };
-
-  const increaseSensitivity = () => {
-    if (sensitivity < 80) setSensitivity(sensitivity + 1);
-  };
-
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backBtn}>{t('settings_back')}</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('settings_title')}</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+    <View style={styles.root}>
+      <AuroraBackground />
+      <SafeAreaView style={styles.safeArea}>
 
-      {/* Content */}
-      <View style={styles.content}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Text style={styles.backText}>‹</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t('settings_title')}</Text>
+          <View style={{ width: 40 }} />
+        </View>
 
-        {/* Sensitivity */}
-        <View style={styles.card}>
-          <View style={styles.rowTop}>
-            <Text style={styles.settingLabel}>{t('settings_sensitivity')}</Text>
-            <Text style={styles.sensitivityValue}>{sensitivity}</Text>
-          </View>
+        <View style={styles.content}>
 
-          <View style={styles.sensitivityControls}>
-            <TouchableOpacity
-              style={[styles.stepBtn, sensitivity <= 10 && styles.stepBtnDisabled]}
-              onPress={decreaseSensitivity}
-              disabled={sensitivity <= 10}
-            >
-              <Text style={styles.stepBtnText}>−</Text>
-            </TouchableOpacity>
-
-            {/* Visual track */}
-            <View style={styles.trackBg}>
-              <View
-                style={[
-                  styles.trackFill,
-                  { width: `${((sensitivity - 10) / 70) * 100}%` },
-                ]}
-              />
+          {/* Sensitivity */}
+          <View style={styles.card}>
+            <View style={styles.rowBetween}>
+              <Text style={styles.cardLabel}>{t('settings_sensitivity')}</Text>
+              <Text style={styles.accentValue}>{sensitivity}</Text>
             </View>
 
-            <TouchableOpacity
-              style={[styles.stepBtn, sensitivity >= 80 && styles.stepBtnDisabled]}
-              onPress={increaseSensitivity}
-              disabled={sensitivity >= 80}
-            >
-              <Text style={styles.stepBtnText}>+</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.sensitivityHints}>
-            <Text style={styles.hintText}>{t('settings_low')}</Text>
-            <Text style={styles.hintText}>{t('settings_high')}</Text>
-          </View>
-        </View>
-
-        {/* Units */}
-        <View style={styles.card}>
-          <Text style={styles.settingLabel}>{t('settings_units')}</Text>
-          <View style={styles.toggleRow}>
-            <TouchableOpacity
-              style={[styles.unitBtn, units === 'metric' && styles.unitBtnActive]}
-              onPress={() => setUnits('metric')}
-            >
-              <Text style={[styles.unitBtnText, units === 'metric' && styles.unitBtnTextActive]}>
-                km/h
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.unitBtn, units === 'imperial' && styles.unitBtnActive]}
-              onPress={() => setUnits('imperial')}
-            >
-              <Text
-                style={[styles.unitBtnText, units === 'imperial' && styles.unitBtnTextActive]}
+            <View style={styles.sensitivityRow}>
+              <TouchableOpacity
+                style={[styles.stepBtn, sensitivity <= 10 && styles.stepBtnOff]}
+                onPress={() => sensitivity > 10 && setSensitivity(sensitivity - 1)}
               >
-                mph
-              </Text>
-            </TouchableOpacity>
+                <Text style={styles.stepBtnText}>−</Text>
+              </TouchableOpacity>
+
+              <View style={styles.trackBg}>
+                <View style={[styles.trackFill, { width: `${((sensitivity - 10) / 70) * 100}%` }]} />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.stepBtn, sensitivity >= 80 && styles.stepBtnOff]}
+                onPress={() => sensitivity < 80 && setSensitivity(sensitivity + 1)}
+              >
+                <Text style={styles.stepBtnText}>+</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.rowBetween}>
+              <Text style={styles.hint}>{t('settings_low')}</Text>
+              <Text style={styles.hint}>{t('settings_high')}</Text>
+            </View>
           </View>
-        </View>
 
-        {/* Sound */}
-        <View style={[styles.card, styles.switchCard]}>
-          <Text style={styles.settingLabel}>{t('settings_sound')}</Text>
-          <Switch
-            value={sound}
-            onValueChange={setSound}
-            trackColor={{ false: colors.surface2, true: colors.accentGlow }}
-            thumbColor={sound ? colors.accent : colors.textMuted}
-          />
-        </View>
+          {/* Units */}
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>{t('settings_units')}</Text>
+            <View style={styles.toggleRow}>
+              {(['metric', 'imperial'] as const).map((u) => (
+                <TouchableOpacity
+                  key={u}
+                  style={[styles.unitBtn, units === u && styles.unitBtnActive]}
+                  onPress={() => setUnits(u)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.unitBtnText, units === u && styles.unitBtnTextActive]}>
+                    {u === 'metric' ? 'km/h' : 'mph'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
 
-        {/* Haptics */}
-        <View style={[styles.card, styles.switchCard]}>
-          <Text style={styles.settingLabel}>{t('settings_haptics')}</Text>
-          <Switch
-            value={haptics}
-            onValueChange={setHaptics}
-            trackColor={{ false: colors.surface2, true: colors.accentGlow }}
-            thumbColor={haptics ? colors.accent : colors.textMuted}
-          />
-        </View>
+          {/* Sound */}
+          <View style={[styles.card, styles.switchCard]}>
+            <Text style={styles.cardLabel}>{t('settings_sound')}</Text>
+            <Switch
+              value={sound}
+              onValueChange={setSound}
+              trackColor={{ false: colors.surface, true: colors.accentDim }}
+              thumbColor={sound ? colors.accent : colors.textMuted}
+            />
+          </View>
 
-      </View>
-    </SafeAreaView>
+          {/* Haptics */}
+          <View style={[styles.card, styles.switchCard]}>
+            <Text style={styles.cardLabel}>{t('settings_haptics')}</Text>
+            <Switch
+              value={haptics}
+              onValueChange={setHaptics}
+              trackColor={{ false: colors.surface, true: colors.accentDim }}
+              thumbColor={haptics ? colors.accent : colors.textMuted}
+            />
+          </View>
+
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
+  root: { flex: 1, backgroundColor: colors.bg },
+  safeArea: { flex: 1 },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
-  backBtn: {
-    color: colors.accent,
-    fontSize: 15,
-    fontWeight: '600',
-  },
+  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  backText: { fontSize: 28, color: colors.accent, fontWeight: '300', lineHeight: 32 },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '800',
     color: colors.text,
-    fontSize: 17,
-    fontWeight: '700',
+    letterSpacing: 1,
   },
-  headerSpacer: {
-    width: 60,
-  },
+
   content: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
     gap: 12,
   },
   card: {
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    borderRadius: 16,
-    padding: 16,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    padding: spacing.md,
   },
   switchCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  settingLabel: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  // Sensitivity
-  rowTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  sensitivityValue: {
-    color: colors.accent,
-    fontSize: 20,
+  cardLabel: {
+    fontSize: 14,
     fontWeight: '700',
+    color: colors.text,
+    marginBottom: spacing.md,
   },
-  sensitivityControls: {
+
+  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  accentValue: { fontSize: 20, fontWeight: '800', color: colors.accent },
+
+  sensitivityRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    marginVertical: spacing.sm,
   },
   stepBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.surface2,
+    width: 38,
+    height: 38,
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceHigh,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepBtnDisabled: {
-    opacity: 0.3,
-  },
-  stepBtnText: {
-    color: colors.text,
-    fontSize: 20,
-    lineHeight: 22,
-    fontWeight: '600',
-  },
+  stepBtnOff: { opacity: 0.25 },
+  stepBtnText: { fontSize: 20, color: colors.text, fontWeight: '500', lineHeight: 24 },
+
   trackBg: {
     flex: 1,
-    height: 6,
-    backgroundColor: colors.surface2,
+    height: 5,
+    backgroundColor: colors.surfaceHigh,
     borderRadius: 3,
     overflow: 'hidden',
   },
-  trackFill: {
-    height: '100%',
-    backgroundColor: colors.accent,
-    borderRadius: 3,
-  },
-  sensitivityHints: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  hintText: {
-    color: colors.textDim,
-    fontSize: 11,
-  },
-  // Units
-  toggleRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
+  trackFill: { height: '100%', backgroundColor: colors.accent, borderRadius: 3 },
+
+  hint: { fontSize: 11, color: colors.textDim },
+
+  toggleRow: { flexDirection: 'row', gap: 8 },
   unitBtn: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingVertical: 11,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    backgroundColor: colors.surface2,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceHigh,
     alignItems: 'center',
   },
   unitBtnActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+    backgroundColor: colors.accentDim,
+    borderColor: colors.borderAccent,
   },
-  unitBtnText: {
-    color: colors.textMuted,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  unitBtnTextActive: {
-    color: colors.text,
-  },
+  unitBtnText: { fontSize: 14, fontWeight: '700', color: colors.textMuted },
+  unitBtnTextActive: { color: colors.accent },
 });
