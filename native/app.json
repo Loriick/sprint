@@ -1,17 +1,19 @@
 {
   "expo": {
-    "name": "native",
-    "slug": "native",
+    "name": "Sprint Timer",
+    "slug": "sprint-timer",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.sprint.timer"
     },
     "android": {
+      "package": "com.sprint.timer",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#030308",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -20,6 +22,17 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-dev-client",
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermission": "Sprint Timer utilise la caméra pour détecter le passage à la ligne d'arrivée.",
+          "enableFrameProcessors": true
+        }
+      ],
+      "react-native-worklets-core"
+    ]
   }
 }
