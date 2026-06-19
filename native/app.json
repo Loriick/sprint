@@ -13,12 +13,9 @@
     "android": {
       "package": "com.sprint.timer",
       "adaptiveIcon": {
-        "backgroundColor": "#030308",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#030308"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
