@@ -85,6 +85,8 @@ export default function CameraScreen({ navigation }: Props) {
   const detectionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const maxTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const graceRef = useRef(false);
 
   // Keep phaseRef in sync
   useEffect(() => {
@@ -117,6 +119,10 @@ export default function CameraScreen({ navigation }: Props) {
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
+    }
+    if (maxTimeoutRef.current) {
+      clearTimeout(maxTimeoutRef.current);
+      maxTimeoutRef.current = null;
     }
     countdownTimeoutsRef.current.forEach(clearTimeout);
     countdownTimeoutsRef.current = [];
@@ -187,6 +193,10 @@ export default function CameraScreen({ navigation }: Props) {
     startTimeRef.current = Date.now();
     setElapsed(0);
 
+    // Grace period: ignore motion for 300ms after GO (phone moves when user starts)
+    graceRef.current = true;
+    setTimeout(() => { graceRef.current = false; }, 300);
+
     // Timer display update at ~60fps
     timerIntervalRef.current = setInterval(() => {
       if (phaseRef.current !== 'running') return;
@@ -196,6 +206,7 @@ export default function CameraScreen({ navigation }: Props) {
     // Motion detection at 10fps
     detectionIntervalRef.current = setInterval(async () => {
       if (phaseRef.current !== 'running') return;
+      if (graceRef.current) return; // still in grace period
       if (!cameraRef.current) return;
 
       try {
@@ -211,7 +222,7 @@ export default function CameraScreen({ navigation }: Props) {
         const prev = prevSnapshotRef.current;
         prevSnapshotRef.current = b64;
 
-        if (!prev) return; // need at least one previous frame
+        if (!prev) return;
 
         const diff = b64Diff(prev, b64);
         const threshold = sensitivityToThreshold(sensitivity);
@@ -223,7 +234,15 @@ export default function CameraScreen({ navigation }: Props) {
         // camera not ready yet — skip this frame
       }
     }, 100);
-  }, [sensitivity]);
+
+    // Max timeout: auto-cancel after 60s
+    maxTimeoutRef.current = setTimeout(() => {
+      if (phaseRef.current !== 'running') return;
+      phaseRef.current = 'done';
+      clearAllTimers();
+      navigation.goBack();
+    }, 60_000);
+  }, [sensitivity, navigation]);
 
   // ---------------------------------------------------------------------------
   // Finish
