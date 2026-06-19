@@ -194,6 +194,9 @@ export default function CameraScreen({ navigation }: Props) {
     setElapsed(0);
     consecutiveHitsRef.current = 0;
 
+    let warmupFrames = 0;
+    const WARMUP = 8; // ~800ms pour que l'exposition caméra se stabilise
+
     // Timer display update at ~60fps
     timerIntervalRef.current = setInterval(() => {
       if (phaseRef.current !== 'running') return;
@@ -205,18 +208,24 @@ export default function CameraScreen({ navigation }: Props) {
       if (phaseRef.current !== 'running') return;
       if (!cameraRef.current) return;
 
-      // Capture timestamp before takePictureAsync to compensate processing delay
       const frameTime = Date.now();
 
       try {
         const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.01,
+          quality: 0.05,
           base64: true,
           skipProcessing: true,
         });
 
         const b64 = photo?.base64 ?? null;
         if (!b64) return;
+
+        warmupFrames++;
+        if (warmupFrames <= WARMUP) {
+          // Warmup: met à jour le baseline sans comparer
+          prevSnapshotRef.current = b64;
+          return;
+        }
 
         const prev = prevSnapshotRef.current;
         prevSnapshotRef.current = b64;
@@ -228,7 +237,6 @@ export default function CameraScreen({ navigation }: Props) {
 
         if (diff > threshold) {
           consecutiveHitsRef.current++;
-          // Require 2 consecutive frames above threshold to avoid false positives
           if (consecutiveHitsRef.current >= 2) {
             triggerFinish(frameTime);
           }
@@ -236,7 +244,7 @@ export default function CameraScreen({ navigation }: Props) {
           consecutiveHitsRef.current = 0;
         }
       } catch {
-        // camera not ready yet — skip this frame
+        // camera not ready — skip frame
       }
     }, 100);
 
