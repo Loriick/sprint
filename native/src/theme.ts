@@ -17,6 +17,14 @@ export const colors = {
   onAccent: '#030308',
 };
 
+export const fonts = {
+  regular: 'Outfit_400Regular',
+  medium: 'Outfit_500Medium',
+  semiBold: 'Outfit_600SemiBold',
+  bold: 'Outfit_700Bold',
+  black: 'Outfit_900Black',
+};
+
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 };
 export const radius = { sm: 10, md: 14, lg: 20, xl: 28, full: 999 };
 

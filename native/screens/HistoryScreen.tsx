@@ -20,7 +20,7 @@ import {
   speedUnitLabel,
 } from '../src/history';
 import { t } from '../src/i18n';
-import { colors, spacing, radius } from '../src/theme';
+import { colors, fonts, spacing, radius } from '../src/theme';
 import AuroraBackground from '../src/components/AuroraBackground';
 import type { HistoryEntry } from '../src/types';
 
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 16,
-    fontWeight: '800',
+    fontFamily: fonts.bold,
     color: colors.accent,
     fontVariant: ['tabular-nums'],
   },
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   dateLabel: { fontSize: 11, color: colors.textDim, marginTop: 2 },
   timeText: {
     fontSize: 22,
-    fontWeight: '800',
+    fontFamily: fonts.bold,
     color: colors.text,
     fontVariant: ['tabular-nums'],
     marginHorizontal: 10,
