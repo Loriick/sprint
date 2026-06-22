@@ -8,7 +8,11 @@
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.sprint.timer"
+      "bundleIdentifier": "com.sprint.timer",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.sprint.timer",
@@ -31,6 +35,11 @@
           "enableFrameProcessors": true
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "bd3d814d-ab30-4789-9ba1-a0b88b854c01"
+      }
+    }
   }
 }
