@@ -4,12 +4,18 @@ const path = require('path');
 
 const FMT_PATCH = `
   # Fix fmt library compile error with Xcode 26 / clang on iOS 26+
-  installer.pods_project.targets.each do |target|
-    if target.name == 'fmt'
-      target.build_configurations.each do |config|
-        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -DFMT_CONSTEVAL='
-        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
-      end
+  # Patch the fmt source directly to remove consteval
+  fmt_headers = [
+    File.join(installer.sandbox.root, 'fmt/include/fmt/core.h'),
+    File.join(installer.sandbox.root, 'fmt/include/fmt/base.h'),
+  ]
+  fmt_headers.each do |header|
+    next unless File.exist?(header)
+    content = File.read(header)
+    if content.include?('define FMT_CONSTEVAL consteval')
+      content = content.gsub('#define FMT_CONSTEVAL consteval', '#define FMT_CONSTEVAL')
+      File.write(header, content)
+      puts "Patched fmt consteval in #{header}"
     end
   end
 `;
@@ -26,13 +32,11 @@ module.exports = function withFmtFix(config) {
       }
 
       if (podfile.includes('post_install do |installer|')) {
-        // Inject into existing post_install block
         podfile = podfile.replace(
           'post_install do |installer|',
           `post_install do |installer|\n${FMT_PATCH}`
         );
       } else {
-        // No post_install block — add one before the final `end`
         podfile = podfile.trimEnd() + `\n\npost_install do |installer|\n${FMT_PATCH}\nend\n`;
       }
 
