@@ -8,9 +8,10 @@ export function getAudioCtx(): AudioContext {
   return audioCtx;
 }
 
-function beep(freq: number, duration: number, type: OscillatorType = 'sine', vol = 0.4): void {
+async function beep(freq: number, duration: number, type: OscillatorType = 'sine', vol = 0.4): Promise<void> {
   if (!state.sound) return;
   const ac = getAudioCtx();
+  if (ac.state === 'suspended') await ac.resume();
   const osc = ac.createOscillator();
   const gain = ac.createGain();
   osc.connect(gain);

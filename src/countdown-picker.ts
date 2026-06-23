@@ -71,7 +71,8 @@ export function init(): void {
 
   btnConfirm.addEventListener('click', async () => {
     hidePicker();
-    getAudioCtx();
+    const ac = getAudioCtx();
+    if (ac.state === 'suspended') await ac.resume();
     await startCamera();
   });
 
