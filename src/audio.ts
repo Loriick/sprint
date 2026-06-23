@@ -4,8 +4,19 @@ let audioCtx: AudioContext | null = null;
 
 export function getAudioCtx(): AudioContext {
   if (!audioCtx) audioCtx = new AudioContext();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
+}
+
+// iOS Safari requires a silent buffer to be played synchronously within
+// the user gesture handler to unlock the AudioContext for future use.
+export async function unlockAudio(): Promise<void> {
+  const ac = getAudioCtx();
+  if (ac.state === 'suspended') await ac.resume();
+  const buffer = ac.createBuffer(1, 1, ac.sampleRate);
+  const source = ac.createBufferSource();
+  source.buffer = buffer;
+  source.connect(ac.destination);
+  source.start(0);
 }
 
 function beep(freq: number, duration: number, type: OscillatorType = 'sine', vol = 0.4): void {
