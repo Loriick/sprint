@@ -1,4 +1,4 @@
-import { getAudioCtx } from './audio';
+import { unlockAudio } from './audio';
 import { startCamera } from './camera';
 import { state } from './state';
 
@@ -71,8 +71,7 @@ export function init(): void {
 
   btnConfirm.addEventListener('click', async () => {
     hidePicker();
-    const ac = getAudioCtx();
-    if (ac.state === 'suspended') await ac.resume();
+    await unlockAudio();
     await startCamera();
   });
 
