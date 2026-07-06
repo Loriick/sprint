@@ -37,11 +37,11 @@
   transition: background 0.1s;
 
   &.triggered {
-    background: color-mix(in srgb, var(--accent) 25%, transparent);
-    border-color: var(--accent);
+    background: color-mix(in srgb, var(--live) 25%, transparent);
+    border-color: var(--live);
 
     .zone-label {
-      color: var(--accent);
+      color: var(--live);
     }
   }
 }
@@ -81,7 +81,7 @@
   letter-spacing: -1px;
 
   &.running {
-    color: var(--accent);
+    color: var(--live);
   }
 }
 
@@ -112,8 +112,8 @@
   transition: transform 0.1s, color 0.1s;
 
   &.go {
-    color: var(--accent);
-    text-shadow: 0 0 40px color-mix(in srgb, var(--accent) 60%, transparent);
+    color: var(--live);
+    text-shadow: 0 0 40px color-mix(in srgb, var(--live) 60%, transparent);
     transform: scale(1.15);
   }
 }
