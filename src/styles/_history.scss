@@ -2,6 +2,10 @@
 .history-section {
   width: 100%;
   max-width: 320px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .history-section-head {
@@ -22,8 +26,11 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 180px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  /* keep the last card's shadow visible */
+  padding-bottom: 4px;
 }
 
 .history-item {

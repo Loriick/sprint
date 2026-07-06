@@ -15,7 +15,7 @@ function renderHistory(): void {
     return;
   }
   const locale = getLang() === 'fr' ? 'fr-FR' : 'en-US';
-  historyList.innerHTML = history.slice(0, 8).map((h) => {
+  historyList.innerHTML = history.slice(0, 20).map((h) => {
     const d = new Date(h.date);
     const dateStr = d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' })
       + ' ' + d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
