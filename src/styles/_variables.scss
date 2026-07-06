@@ -1,22 +1,32 @@
 :root {
-  /* surfaces */
-  --bg: #0A0B0D;
-  --surface: #131619;
-  --surface-2: #15181B;
+  /* surfaces — light DA: soft grey canvas, white cards */
+  --bg: #F4F5F7;
+  --surface: #FFFFFF;
+  --surface-2: #ECEEF1;
 
   /* text */
-  --text: #F4F6F7;
-  --text-2: #C5CBD1;
-  --text-muted: #9AA0A6;
-  --text-dim: #5E646B;
+  --text: #0B0C0E;
+  --text-2: #3F444B;
+  --text-muted: #7A8087;
+  --text-dim: #A9AFB6;
 
-  /* accent */
-  --accent: #16E0CB;
-  --on-accent: #07090A;
+  /* accent — black pills/cards, white text on top */
+  --accent: #101113;
+  --on-accent: #FFFFFF;
+
+  /* camera overlays need a vivid color readable on live video */
+  --live: #16E0CB;
+
+  /* charts — soft blue like the reference activity curve */
+  --chart-blue: #8FB6F2;
+  --chart-bar-idle: #E3E7EC;
 
   /* status */
-  --warn: #FFC53D;
-  --danger: #FF4D3D;
-  --delta-slower: #FF7A5C;
-  --chart-bar-idle: #2C3137;
+  --warn: #F5A623;
+  --danger: #E5484D;
+  --delta-slower: #E5484D;
+
+  /* soft elevation instead of neon glows */
+  --shadow-card: 0 2px 12px rgba(11, 12, 14, 0.06);
+  --shadow-btn: 0 8px 20px rgba(11, 12, 14, 0.22);
 }

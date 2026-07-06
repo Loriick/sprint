@@ -128,7 +128,7 @@ input[type=range] {
   height: 28px;
   border-radius: 99px;
   border: none;
-  background: #2A2E33;
+  background: #D6DBE0;
   position: relative;
   cursor: pointer;
   padding: 0;
@@ -141,7 +141,8 @@ input[type=range] {
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: var(--text-2);
+    background: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(11, 12, 14, 0.25);
     transition: transform 0.15s;
   }
 

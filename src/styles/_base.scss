@@ -71,7 +71,7 @@ html, body {
   width: 100%;
   max-width: 320px;
   padding: 18px;
-  border-radius: 16px;
+  border-radius: 999px;
   border: none;
   background: var(--accent);
   color: var(--on-accent);
@@ -80,7 +80,7 @@ html, body {
   cursor: pointer;
   letter-spacing: 0.5px;
   transition: opacity 0.15s, transform 0.1s;
-  box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 35%, transparent);
+  box-shadow: var(--shadow-btn);
 
   &:active {
     transform: scale(0.97);
