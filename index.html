@@ -102,6 +102,12 @@
       </div>
     </div>
 
+    <div id="series-banner" class="series-banner hidden">
+      <span id="series-progress" class="series-progress"></span>
+      <span id="series-next" class="series-next"></span>
+      <button id="btn-series-stop" class="btn-secondary" data-i18n="series_stop">Arrêter la série</button>
+    </div>
+
     <div class="result-actions">
       <button id="btn-retry" class="btn-primary">↺ <span data-i18n="result_retry_label">Relancer</span></button>
       <div class="result-ghost-row">
@@ -207,6 +213,26 @@
         <div class="drum-picker-highlight"></div>
         <div id="drum-picker" class="drum-picker"></div>
       </div>
+
+      <div class="series-config">
+        <div class="stepper-row">
+          <span data-i18n="series_sprints">Sprints</span>
+          <div class="stepper">
+            <button id="sprints-minus" aria-label="−">−</button>
+            <span id="sprints-count" class="stepper-val">1</span>
+            <button id="sprints-plus" aria-label="+">+</button>
+          </div>
+        </div>
+        <div class="stepper-row" id="rest-row">
+          <span data-i18n="series_rest">Repos</span>
+          <div class="stepper">
+            <button id="rest-minus" aria-label="−">−</button>
+            <span id="rest-val" class="stepper-val">1:00</span>
+            <button id="rest-plus" aria-label="+">+</button>
+          </div>
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button id="picker-cancel" class="btn-secondary" data-i18n="picker_cancel">Annuler</button>
         <button id="picker-confirm" class="btn-primary picker-confirm-btn" data-i18n="picker_confirm">Démarrer →</button>

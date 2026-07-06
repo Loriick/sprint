@@ -5,10 +5,31 @@ import { state } from './state';
 const DURATIONS = [3, 5, 10, 15, 30];
 const ITEM_HEIGHT = 56;
 
+const MAX_SPRINTS = 10;
+const REST_STEP = 15; // seconds
+const REST_MIN = 15;
+const REST_MAX = 300;
+
 const overlay = document.getElementById('countdown-picker-modal') as HTMLElement;
 const drum = document.getElementById('drum-picker') as HTMLElement;
 const btnConfirm = document.getElementById('picker-confirm') as HTMLButtonElement;
 const btnCancel = document.getElementById('picker-cancel') as HTMLButtonElement;
+const sprintsCount = document.getElementById('sprints-count') as HTMLElement;
+const restVal = document.getElementById('rest-val') as HTMLElement;
+const restRow = document.getElementById('rest-row') as HTMLElement;
+
+export function formatRest(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}s`;
+}
+
+function syncSeriesConfig(): void {
+  sprintsCount.textContent = String(state.seriesTotal);
+  restVal.textContent = formatRest(state.restDuration);
+  // Rest is meaningless for a single sprint
+  restRow.classList.toggle('disabled', state.seriesTotal <= 1);
+}
 
 function renderItems(): void {
   drum.innerHTML = '';
@@ -50,6 +71,7 @@ export function showPicker(): void {
   const idx = DURATIONS.indexOf(state.countdownDuration);
   scrollToIndex(idx >= 0 ? idx : 1);
   updateSelection();
+  syncSeriesConfig();
   btnConfirm.focus();
 }
 
@@ -70,8 +92,33 @@ export function init(): void {
     }, 80);
   });
 
+  document.getElementById('sprints-minus')!.addEventListener('click', () => {
+    state.seriesTotal = Math.max(1, state.seriesTotal - 1);
+    localStorage.setItem('seriesTotal', String(state.seriesTotal));
+    syncSeriesConfig();
+  });
+
+  document.getElementById('sprints-plus')!.addEventListener('click', () => {
+    state.seriesTotal = Math.min(MAX_SPRINTS, state.seriesTotal + 1);
+    localStorage.setItem('seriesTotal', String(state.seriesTotal));
+    syncSeriesConfig();
+  });
+
+  document.getElementById('rest-minus')!.addEventListener('click', () => {
+    state.restDuration = Math.max(REST_MIN, state.restDuration - REST_STEP);
+    localStorage.setItem('restDuration', String(state.restDuration));
+    syncSeriesConfig();
+  });
+
+  document.getElementById('rest-plus')!.addEventListener('click', () => {
+    state.restDuration = Math.min(REST_MAX, state.restDuration + REST_STEP);
+    localStorage.setItem('restDuration', String(state.restDuration));
+    syncSeriesConfig();
+  });
+
   btnConfirm.addEventListener('click', async () => {
     hidePicker();
+    state.seriesIndex = 1;
     await unlockAudio();
     await startCamera();
   });

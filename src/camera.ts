@@ -254,6 +254,7 @@ function showResult(ms: number): void {
   }
 
   showScreen('result');
+  document.dispatchEvent(new CustomEvent('sprint:result'));
 }
 
 export function stopCamera(): void {
