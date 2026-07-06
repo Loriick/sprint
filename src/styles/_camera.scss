@@ -142,7 +142,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  pointer-events: all;
+  /* no pointer-events override here: "all" would re-enable clicks on this
+     invisible bar even when the whole camera screen is .hidden */
 }
 
 .cam-info {
