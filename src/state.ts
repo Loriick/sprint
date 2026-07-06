@@ -20,6 +20,7 @@ export const state: AppState = {
   units,
   sound: localStorage.getItem('sound') !== 'false',
   haptics: localStorage.getItem('haptics') !== 'false',
+  voice: localStorage.getItem('voice') !== 'false',
   seriesTotal: parseInt(localStorage.getItem('seriesTotal') || '1'),
   restDuration: parseInt(localStorage.getItem('restDuration') || '60'),
   seriesIndex: 0,

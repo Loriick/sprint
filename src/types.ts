@@ -16,6 +16,7 @@ export interface AppState {
   units: Units;
   sound: boolean;
   haptics: boolean;
+  voice: boolean;
   seriesTotal: number;
   restDuration: number;
   seriesIndex: number;

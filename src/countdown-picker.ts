@@ -1,4 +1,5 @@
 import { unlockAudio } from './audio';
+import { unlockSpeech } from './speech';
 import { startCamera } from './camera';
 import { state } from './state';
 
@@ -119,6 +120,7 @@ export function init(): void {
   btnConfirm.addEventListener('click', async () => {
     hidePicker();
     state.seriesIndex = 1;
+    unlockSpeech();
     await unlockAudio();
     await startCamera();
   });

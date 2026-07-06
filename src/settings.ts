@@ -1,6 +1,7 @@
 import { sensitivityToThreshold } from './camera';
 import { router } from './router';
 import { showScreen } from './screens';
+import { speechAvailable } from './speech';
 import { state } from './state';
 import type { Units } from './types';
 
@@ -10,6 +11,7 @@ const motionBars = document.querySelectorAll<HTMLElement>('.motion-bar-fill');
 const unitsButtons = document.querySelectorAll<HTMLButtonElement>('.units-btn');
 const toggleSound = document.getElementById('toggle-sound') as HTMLButtonElement;
 const toggleHaptics = document.getElementById('toggle-haptics') as HTMLButtonElement;
+const toggleVoice = document.getElementById('toggle-voice') as HTMLButtonElement;
 
 function syncToggleStates(): void {
   unitsButtons.forEach((btn) => {
@@ -17,6 +19,7 @@ function syncToggleStates(): void {
   });
   toggleSound.classList.toggle('on', state.sound);
   toggleHaptics.classList.toggle('on', state.haptics);
+  toggleVoice.classList.toggle('on', state.voice);
 }
 
 // Live sensitivity preview using front camera
@@ -126,6 +129,16 @@ export function init(): void {
   toggleHaptics.addEventListener('click', () => {
     state.haptics = !state.haptics;
     localStorage.setItem('haptics', String(state.haptics));
+    syncToggleStates();
+  });
+
+  if (!speechAvailable()) {
+    toggleVoice.closest('.toggle-row')!.classList.add('hidden');
+  }
+
+  toggleVoice.addEventListener('click', () => {
+    state.voice = !state.voice;
+    localStorage.setItem('voice', String(state.voice));
     syncToggleStates();
   });
 
