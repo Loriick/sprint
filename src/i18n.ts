@@ -41,6 +41,8 @@ const STR: Record<string, Record<Lang, string>> = {
   settings_units: { fr: 'Unités', en: 'Units' },
   settings_sound: { fr: 'Son', en: 'Sound' },
   settings_haptics: { fr: 'Vibrations', en: 'Haptics' },
+  settings_voice: { fr: 'Annonce vocale', en: 'Voice announce' },
+  voice_new_record: { fr: 'Nouveau record !', en: 'New record!' },
 
   history_title: { fr: 'Historique', en: 'History' },
   history_back: { fr: '← Retour', en: '← Back' },

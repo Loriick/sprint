@@ -3,6 +3,7 @@ import { getBest, saveResult, speedForUnits, speedKmh, speedMph, speedUnitLabel 
 import { t } from './i18n';
 import { router } from './router';
 import { showScreen } from './screens';
+import { announceResult } from './speech';
 import { state } from './state';
 
 const video = document.getElementById('video') as HTMLVideoElement;
@@ -240,6 +241,7 @@ function showResult(ms: number): void {
 
   const isPB = prevBest == null || ms < prevBest;
   resultPbPill.classList.toggle('hidden', !isPB);
+  announceResult(ms, isPB);
 
   if (isPB) {
     resultVsBest.textContent = t('result_record_word');
