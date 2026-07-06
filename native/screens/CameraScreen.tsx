@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Camera, useCameraDevice, useCameraPermission, useFrameProcessor } from 'react-native-vision-camera';
-import { useSharedValue, runOnJS } from 'react-native-worklets-core';
-import { resize } from 'vision-camera-resize-plugin';
+import { useRunOnJS, useSharedValue } from 'react-native-worklets-core';
+import { useResizePlugin } from 'vision-camera-resize-plugin';
 import * as Haptics from 'expo-haptics';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
@@ -136,9 +136,15 @@ export default function CameraScreen({ navigation }: Props) {
     }, 800);
   }, [distance, navigation]);
 
+  // useRunOnJS crée le pont worklet → thread JS (l'équivalent runOnJS de
+  // Reanimated n'existe pas dans react-native-worklets-core)
+  const notifyMotionDetected = useRunOnJS(onMotionDetected, [onMotionDetected]);
+
   // ---------------------------------------------------------------------------
   // Frame processor — tourne sur le thread caméra, accès pixels bruts
   // ---------------------------------------------------------------------------
+  const { resize } = useResizePlugin();
+
   const frameProcessor = useFrameProcessor((frame) => {
     'worklet';
     if (!isRunning.value) return;
@@ -149,6 +155,7 @@ export default function CameraScreen({ navigation }: Props) {
       scale: { width: FRAME_W, height: FRAME_H },
       pixelFormat: 'rgb',
       dataType: 'uint8',
+      rotation: '0deg',
     });
 
     const current = new Uint8Array(resized.buffer);
@@ -174,12 +181,12 @@ export default function CameraScreen({ navigation }: Props) {
     if (avgDiff > thresholdValue.value) {
       consecutiveHits.value += 1;
       if (consecutiveHits.value >= 2) {
-        runOnJS(onMotionDetected)(now);
+        notifyMotionDetected(now);
       }
     } else {
       consecutiveHits.value = 0;
     }
-  }, [isRunning, prevFrame, warmupCount, consecutiveHits, thresholdValue, onMotionDetected]);
+  }, [isRunning, prevFrame, warmupCount, consecutiveHits, thresholdValue, notifyMotionDetected]);
 
   // ---------------------------------------------------------------------------
   // Countdown
@@ -303,7 +310,7 @@ export default function CameraScreen({ navigation }: Props) {
             <Text style={styles.cancelText}>{t('cam_cancel')}</Text>
           </TouchableOpacity>
           <View style={styles.distancePill}>
-            <Text style={styles.distancePillText}>{distance} m</Text>
+            <Text style={styles.distancePillText}>{distance} yd</Text>
           </View>
         </View>
 
