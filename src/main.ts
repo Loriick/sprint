@@ -6,6 +6,7 @@ import { applyI18n } from './i18n';
 import * as modal from './modal';
 import { router } from './router';
 import * as result from './result';
+import * as series from './series';
 import * as settings from './settings';
 
 home.init();
@@ -15,6 +16,7 @@ camera.init();
 result.init();
 modal.init();
 countdownPicker.init();
+series.init();
 
 applyI18n();
 router.start();

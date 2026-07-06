@@ -61,6 +61,12 @@ const STR: Record<string, Record<Lang, string>> = {
   picker_subtitle: { fr: 'Faites défiler pour choisir', en: 'Scroll to choose' },
   picker_confirm: { fr: 'Démarrer →', en: 'Start →' },
   picker_cancel: { fr: 'Annuler', en: 'Cancel' },
+
+  series_sprints: { fr: 'Sprints', en: 'Sprints' },
+  series_rest: { fr: 'Repos', en: 'Rest' },
+  series_next_in: { fr: 'Prochain départ dans', en: 'Next start in' },
+  series_done: { fr: 'Série terminée !', en: 'Series complete!' },
+  series_stop: { fr: 'Arrêter la série', en: 'Stop series' },
 };
 
 export function t(key: string): string {

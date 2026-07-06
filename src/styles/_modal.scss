@@ -154,6 +154,66 @@
   font-size: 1rem;
 }
 
+/* ── SERIES CONFIG (sprints count + rest steppers) ── */
+.series-config {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  > span {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  &.disabled {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface-2);
+  border-radius: 11px;
+  padding: 3px;
+
+  button {
+    width: 34px;
+    height: 30px;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-size: 1.1rem;
+    font-weight: 800;
+    border-radius: 8px;
+    cursor: pointer;
+
+    &:active {
+      background: color-mix(in srgb, var(--accent) 15%, transparent);
+    }
+  }
+}
+
+.stepper-val {
+  min-width: 44px;
+  text-align: center;
+  font-family: 'Saira Condensed', 'Archivo', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
 .btn-danger {
   background: var(--danger);
   color: var(--on-accent);
