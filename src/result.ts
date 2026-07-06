@@ -1,4 +1,5 @@
 import { startCamera, stopCamera } from './camera';
+import { t } from './i18n';
 import { router } from './router';
 
 const shareToast = document.getElementById('share-toast') as HTMLElement;
@@ -17,16 +18,19 @@ async function shareResult(): Promise<void> {
   try {
     if (navigator.share) {
       await navigator.share({ text });
+      showToast(t('result_shared_toast'));
       return;
     }
     await navigator.clipboard.writeText(text);
   } catch {
+    // user dismissed the share sheet or clipboard was denied
     return;
   }
-  showToast();
+  showToast(t('result_share_toast'));
 }
 
-function showToast(): void {
+function showToast(message: string): void {
+  shareToast.textContent = message;
   if (toastTimer !== null) clearTimeout(toastTimer);
   shareToast.classList.remove('hidden');
   shareToast.classList.add('visible');

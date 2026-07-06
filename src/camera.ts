@@ -20,6 +20,7 @@ const resultDistance = document.getElementById('result-distance') as HTMLElement
 const resultTime = document.getElementById('result-time') as HTMLElement;
 const resultPbPill = document.getElementById('result-pb-pill') as HTMLElement;
 const resultSpeedPrimary = document.getElementById('result-speed-primary') as HTMLElement;
+const resultSpeedUnit = document.querySelector('#screen-result .result-stat-unit') as HTMLElement;
 const resultSpeedSecondary = document.getElementById('result-speed-secondary') as HTMLElement;
 const resultVsBest = document.getElementById('result-vs-best') as HTMLElement;
 const resultBestTime = document.getElementById('result-best-time') as HTMLElement;
@@ -47,6 +48,17 @@ function showCameraError(err: Error): void {
 }
 
 // ── Countdown ─────────────────────────────────────────
+let countdownTimer: ReturnType<typeof setTimeout> | null = null;
+let maxRunTimer: ReturnType<typeof setTimeout> | null = null;
+
+// Auto-stop if nothing ever crosses the line
+const MAX_RUN_MS = 60_000;
+
+function clearTimers(): void {
+  if (countdownTimer !== null) { clearTimeout(countdownTimer); countdownTimer = null; }
+  if (maxRunTimer !== null) { clearTimeout(maxRunTimer); maxRunTimer = null; }
+}
+
 function startCountdown(): void {
   state.phase = 'countdown';
   countdownOverlay.classList.remove('hidden');
@@ -63,6 +75,7 @@ function startCountdown(): void {
   let i = 0;
 
   function tick(): void {
+    if (state.phase !== 'countdown') return;
     if (i >= steps.length) {
       countdownOverlay.classList.add('hidden');
       startRun();
@@ -73,20 +86,41 @@ function startCountdown(): void {
     countdownNumber.classList.toggle('go', !!s.isGo);
     countdownLabel.textContent = s.isGo ? t('cam_go_label') : t('cam_get_ready');
     s.action();
-    setTimeout(tick, s.isGo ? 800 : 1000);
+    countdownTimer = setTimeout(tick, s.isGo ? 800 : 1000);
   }
 
   tick();
 }
 
 // ── Run & timer ────────────────────────────────────────
+// Detection runs only AFTER "GO": the runner starts away from the camera and
+// crosses the line at the end, so warming up right after GO never misses a finish.
+const WARMUP_FRAMES = 10; // let auto-exposure settle after the overlay disappears
+const CONSECUTIVE_HITS = 2; // require 2 consecutive frames over threshold (noise immunity)
+
+let warmupFrames = 0;
+let consecutiveHits = 0;
+
+// Sensibilité (10-80) → seuil de diff pixel (5-30), same mapping as the native app
+export function sensitivityToThreshold(s: number): number {
+  return 5 + ((s - 10) / 70) * 25;
+}
+
 function startRun(): void {
   state.phase = 'running';
   state.startTime = performance.now();
   state.prevFrame = null;
+  warmupFrames = 0;
+  consecutiveHits = 0;
   timerValue.classList.add('running');
   zoneLabel.textContent = t('cam_finish_line');
   detectionZone.classList.remove('triggered');
+
+  maxRunTimer = setTimeout(() => {
+    if (state.phase !== 'running') return;
+    stopCamera();
+    router.navigate('/');
+  }, MAX_RUN_MS);
 
   function tick(): void {
     if (state.phase !== 'running') return;
@@ -115,8 +149,10 @@ function detectLoop(): void {
     return;
   }
 
-  canvasDetect.width = vw;
-  canvasDetect.height = vh;
+  if (canvasDetect.width !== vw || canvasDetect.height !== vh) {
+    canvasDetect.width = vw;
+    canvasDetect.height = vh;
+  }
 
   // Draw current frame
   ctx.drawImage(video, 0, 0, vw, vh);
@@ -127,6 +163,13 @@ function detectLoop(): void {
   const sampleStep = Math.max(1, Math.floor(vh / 40)); // ~40 sample rows
 
   const current = ctx.getImageData(zoneX, 0, zoneWidth, vh);
+
+  warmupFrames++;
+  if (warmupFrames <= WARMUP_FRAMES) {
+    state.prevFrame = current;
+    requestAnimationFrame(detectLoop);
+    return;
+  }
 
   if (state.prevFrame) {
     let totalDiff = 0;
@@ -145,9 +188,14 @@ function detectLoop(): void {
 
     const avgDiff = totalDiff / samples;
 
-    if (avgDiff > state.sensitivity) {
-      triggerFinish();
-      return;
+    if (avgDiff > sensitivityToThreshold(state.sensitivity)) {
+      consecutiveHits++;
+      if (consecutiveHits >= CONSECUTIVE_HITS) {
+        triggerFinish();
+        return;
+      }
+    } else {
+      consecutiveHits = 0;
     }
   }
 
@@ -158,6 +206,7 @@ function detectLoop(): void {
 function triggerFinish(): void {
   if (state.phase !== 'running') return;
   state.phase = 'done';
+  clearTimers();
   if (state.timerRaf !== null) cancelAnimationFrame(state.timerRaf);
 
   const finalMs = performance.now() - state.startTime;
@@ -183,7 +232,6 @@ function showResult(ms: number): void {
 
   const kmh = speedKmh(state.distance, ms);
   const mph = speedMph(state.distance, ms);
-  const resultSpeedUnit = document.querySelector('#screen-result .result-stat-unit') as HTMLElement;
   resultSpeedPrimary.textContent = speedForUnits(state.distance, ms).toFixed(1);
   resultSpeedUnit.textContent = speedUnitLabel();
   resultSpeedSecondary.textContent = state.units === 'imperial'
@@ -210,6 +258,7 @@ function showResult(ms: number): void {
 
 export function stopCamera(): void {
   state.phase = 'idle';
+  clearTimers();
   if (state.timerRaf !== null) cancelAnimationFrame(state.timerRaf);
   countdownOverlay.classList.add('hidden');
   if (state.stream) {

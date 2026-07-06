@@ -8,9 +8,7 @@
   <meta name="theme-color" content="#0A0B0D">
   <title>Sprint Timer</title>
   <link rel="manifest" href="/manifest.json">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&family=Saira+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="preload" href="/fonts/Archivo-variable-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/src/styles/main.scss">
 </head>
 <body>
@@ -201,9 +199,9 @@
   </div>
 
   <!-- ── COUNTDOWN PICKER ── -->
-  <div id="countdown-picker-modal" class="modal-overlay hidden">
+  <div id="countdown-picker-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="picker-title">
     <div class="modal-card picker-card">
-      <h3 class="modal-title" data-i18n="picker_title">Compte à rebours</h3>
+      <h3 id="picker-title" class="modal-title" data-i18n="picker_title">Compte à rebours</h3>
       <p class="modal-message" data-i18n="picker_subtitle">Faites défiler pour choisir</p>
       <div class="drum-picker-wrap">
         <div class="drum-picker-highlight"></div>
@@ -217,7 +215,7 @@
   </div>
 
   <!-- ── CONFIRM MODAL ── -->
-  <div id="confirm-modal" class="modal-overlay hidden">
+  <div id="confirm-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
     <div class="modal-card">
       <h3 id="confirm-modal-title" class="modal-title"></h3>
       <p id="confirm-modal-message" class="modal-message"></p>

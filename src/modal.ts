@@ -24,6 +24,7 @@ export function confirmModal(title: string, message: string, confirmLabel: strin
   // Force a reflow so the opacity transition fires after display:none is removed
   overlay.getBoundingClientRect();
   overlay.classList.add('visible');
+  btnCancel.focus();
   return new Promise((resolve) => {
     resolveCurrent = resolve;
   });
@@ -34,5 +35,8 @@ export function init(): void {
   btnCancel.addEventListener('click', () => close(false));
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) close(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && resolveCurrent !== null) close(false);
   });
 }

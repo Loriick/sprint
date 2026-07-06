@@ -1,3 +1,4 @@
+import { sensitivityToThreshold } from './camera';
 import { router } from './router';
 import { showScreen } from './screens';
 import { state } from './state';
@@ -81,7 +82,7 @@ function previewLoop(): void {
       motionBars.forEach((bar) => {
         const variation = (Math.random() - 0.5) * 15;
         bar.style.height = Math.max(4, Math.min(100, pct + variation)) + '%';
-        bar.style.background = avgDiff > state.sensitivity ? 'var(--accent)' : 'var(--text-muted)';
+        bar.style.background = avgDiff > sensitivityToThreshold(state.sensitivity) ? 'var(--accent)' : 'var(--text-muted)';
       });
     }
     previewPrevFrame = current;
@@ -90,6 +91,11 @@ function previewLoop(): void {
 }
 
 export function init(): void {
+  // navigator.vibrate does not exist on iOS Safari — hide a toggle that can do nothing
+  if (!('vibrate' in navigator)) {
+    toggleHaptics.closest('.toggle-row')!.classList.add('hidden');
+  }
+
   document.getElementById('btn-settings')!.addEventListener('click', () => {
     router.navigate('/settings');
   });
