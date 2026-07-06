@@ -1,5 +1,5 @@
-const CACHE = 'sprint-v3';
-const CORE_FILES = ['/', '/manifest.json', '/icon.svg'];
+const CACHE = 'sprint-v4';
+const CORE_FILES = ['/', '/manifest.json', '/icon.svg', '/fonts/Archivo-variable-latin.woff2', '/fonts/SairaCondensed-600-latin.woff2', '/fonts/SairaCondensed-700-latin.woff2', '/fonts/SairaCondensed-800-latin.woff2'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CORE_FILES)));

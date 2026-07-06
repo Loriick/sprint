@@ -27,6 +27,7 @@ const STR: Record<string, Record<Lang, string>> = {
   result_home_label: { fr: 'Accueil', en: 'Home' },
   result_share_label: { fr: 'Partager', en: 'Share' },
   result_share_toast: { fr: 'Résultat copié !', en: 'Result copied!' },
+  result_shared_toast: { fr: 'Partagé !', en: 'Shared!' },
 
   settings_title: { fr: 'Réglages', en: 'Settings' },
   settings_sensitivity: { fr: 'Sensibilité de détection', en: 'Detection sensitivity' },

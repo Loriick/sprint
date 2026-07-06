@@ -112,6 +112,10 @@ input[type=range] {
   align-items: center;
   justify-content: space-between;
 
+  &.hidden {
+    display: none;
+  }
+
   span {
     color: var(--text);
     font-size: 0.85rem;

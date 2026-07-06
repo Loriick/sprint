@@ -50,6 +50,7 @@ export function showPicker(): void {
   const idx = DURATIONS.indexOf(state.countdownDuration);
   scrollToIndex(idx >= 0 ? idx : 1);
   updateSelection();
+  btnConfirm.focus();
 }
 
 function hidePicker(): void {
@@ -81,5 +82,9 @@ export function init(): void {
 
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) hidePicker();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay.classList.contains('visible')) hidePicker();
   });
 }

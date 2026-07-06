@@ -35,9 +35,11 @@ function renderHistoryPage(distFilter: string): void {
     const speed = speeds[i];
     const heightPct = range === 0 ? 100 : 32 + (speed - minSpeed) / range * 68;
     const isBest = best !== null && h.timeMs === best;
+    // Labelling every bar gets unreadable past ~15 runs: only best + most recent
+    const showLabel = isBest || i === chronological.length - 1;
     return `
       <div class="history-chart-bar${isBest ? ' best' : ''}" style="height:${heightPct}%">
-        <span class="history-chart-bar-label">${formatTime(h.timeMs)}</span>
+        ${showLabel ? `<span class="history-chart-bar-label">${formatTime(h.timeMs)}</span>` : ''}
       </div>`;
   }).join('');
 
@@ -61,7 +63,7 @@ function renderHistoryPage(distFilter: string): void {
         </div>
         <span class="time-val">${formatTime(h.timeMs)}</span>
         <span class="speed-label">${speedForUnits(h.dist, h.timeMs).toFixed(1)} ${unitLabel}</span>
-        <button class="btn-delete" data-id="${h.id}" aria-label="Supprimer">✕</button>
+        <button class="btn-delete" data-id="${h.id}" aria-label="${t('delete_confirm')}">✕</button>
       </div>`;
   }).join('');
 }
