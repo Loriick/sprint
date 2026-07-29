@@ -105,13 +105,18 @@ export default function CameraScreen({ navigation }: Props) {
 
   useEffect(() => () => clearAllTimers(), []);
 
-  async function playBeep(type: 'low' | 'go' | 'stop') {
+  async function playBeep(type: 'low' | 'go' | 'stop', remaining?: number) {
     if (!haptics) return;
     try {
       if (type === 'go' || type === 'stop') {
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } else {
+      } else if (remaining === 2) {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } else if (remaining === 1) {
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      } else {
+        // 3 et au-delà : impact léger, l'intensité monte sur les 2 dernières secondes
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     } catch { /* ignore */ }
   }
@@ -208,7 +213,7 @@ export default function CameraScreen({ navigation }: Props) {
         if (phaseRef.current !== 'countdown') return;
         setCountdownNum(step.num);
         setIsGo(step.go);
-        playBeep(step.go ? 'go' : 'low');
+        playBeep(step.go ? 'go' : 'low', step.num ?? undefined);
       }, delay);
       countdownTimeoutsRef.current.push(t1);
       delay += step.duration;

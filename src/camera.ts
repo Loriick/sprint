@@ -1,4 +1,4 @@
-import { beepGo, beepLow, beepStop, vibrate } from './audio';
+import { beepCountdown, beepGo, beepStop, vibrate } from './audio';
 import { getBest, saveResult, speedForUnits, speedKmh, speedMph, speedUnitLabel } from './history';
 import { t } from './i18n';
 import { router } from './router';
@@ -69,7 +69,7 @@ function startCountdown(): void {
 
   const steps: { text: string; action: () => void; isGo?: boolean }[] = [];
   for (let i = state.countdownDuration; i >= 1; i--) {
-    steps.push({ text: String(i), action: beepLow });
+    steps.push({ text: String(i), action: () => beepCountdown(i) });
   }
   steps.push({ text: 'GO !', action: () => { beepGo(); vibrate(80); }, isGo: true });
 

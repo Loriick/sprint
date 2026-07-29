@@ -35,6 +35,17 @@ function beep(freq: number, duration: number, type: OscillatorType = 'sine', vol
 }
 
 export function beepLow(): void { beep(440, 0.15); }
+
+// Rising three-tone sequence (A4 → C#5 → E5, an A-major arpeggio) over the
+// last 3 seconds, so each second sounds distinct and builds up to GO.
+const COUNTDOWN_FREQS: Record<number, number> = { 3: 440, 2: 554, 1: 659 };
+
+export function beepCountdown(remaining: number): void {
+  const freq = COUNTDOWN_FREQS[remaining];
+  if (freq) beep(freq, remaining === 1 ? 0.25 : 0.15);
+  else beepLow();
+}
+
 export function beepGo(): void { beep(880, 0.4, 'square', 0.5); }
 export function beepStop(): void { beep(1200, 0.6, 'square', 0.6); }
 

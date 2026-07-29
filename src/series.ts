@@ -1,4 +1,4 @@
-import { beepLow } from './audio';
+import { beepCountdown } from './audio';
 import { startCamera } from './camera';
 import { formatRest } from './countdown-picker';
 import { t } from './i18n';
@@ -50,7 +50,7 @@ function onResultShown(): void {
     remaining--;
     if (remaining > 0) {
       nextEl.textContent = `${t('series_next_in')} ${formatRest(remaining)}`;
-      if (remaining <= 3) beepLow();
+      if (remaining <= 3) beepCountdown(remaining);
       return;
     }
     clearRestTimer();
